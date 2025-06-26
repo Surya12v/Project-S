@@ -1,0 +1,32 @@
+[
+  {
+    "_id": {
+      "$oid": "684855d73d1213ca52af6c89"
+    },
+    "name": "Premium Laptop Pro X1",
+    "sku": "LAP-PRO-X1-2024",
+    "brand": "TechMaster",
+    "category": "electronics/laptops",
+    "price": 89999.99,
+    "stockQuantity": 50,
+    "isActive": true,
+    "createdAt": {
+      "$date": "2024-01-01T10:00:00.000Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "684855d73d1213ca52af6c90"
+    },
+    "name": "Wireless Gaming Mouse",
+    "sku": "ACC-MOUSE-G1",
+    "brand": "GameTech",
+    "category": "electronics/accessories",
+    "price": 2999.99,
+    "stockQuantity": 100,
+    "isActive": true,
+    "createdAt": {
+      "$date": "2024-01-02T10:00:00.000Z"
+    }
+  }
+]

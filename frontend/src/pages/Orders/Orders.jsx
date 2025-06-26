@@ -1,0 +1,107 @@
+import React, { useEffect } from 'react';
+import { Table, Tag, Typography, Space, Card, message } from 'antd';
+import { API_URL } from '../../config/constants';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchOrders } from '../../store/slices/orderSlice';
+import axios from 'axios';
+
+const { Title } = Typography;
+
+const Orders = () => {
+  const dispatch = useDispatch();
+  const { items: orders, loading, error } = useSelector(state => state.orders);
+
+  useEffect(() => {
+    dispatch(fetchOrders());
+  }, [dispatch]);
+
+  const columns = [
+    // {
+    //   title: 'Order ID',
+    //   dataIndex: '_id',
+    //   key: '_id',
+    //   width: 200,
+    // },
+    {
+      title: 'Items',
+      dataIndex: 'items',
+      key: 'items',
+      render: (items) => (
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {items?.map((item, index) => (
+            <li key={index}>
+              {item.productId?.name} x {item.quantity}
+            </li>
+          ))}
+        </ul>
+      )
+    },
+    {
+      title: 'Total Amount',
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
+      render: (amount) => `₹${amount?.toFixed(2) || '0.00'}`,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'orderStatus',
+      key: 'orderStatus',
+      render: (status) => (
+        <Tag color={
+          status === 'DELIVERED' ? 'green' :
+          status === 'SHIPPED' ? 'blue' :
+          status === 'CANCELLED' ? 'red' : 'gold'
+        }>
+          {status}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Payment',
+      dataIndex: 'paymentStatus',
+      key: 'paymentStatus',
+      render: (status) => (
+        <Tag color={status === 'PAID' ? 'green' : 'orange'}>
+          {status}
+        </Tag>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: '24px' }}>
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Title level={2}>My Orders</Title>
+        {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
+        <Card>
+          <Table 
+            columns={columns} 
+            dataSource={orders}
+            loading={loading}
+            rowKey="_id"
+            pagination={{
+              pageSize: 10,
+              showTotal: (total) => `Total ${total} orders`
+            }}
+          />
+        </Card>
+      </Space>
+    </div>
+  );
+};
+
+// export default Orders;
+//             loading={loading}
+//             rowKey="_id"
+//             pagination={{
+//               pageSize: 10,
+//               showTotal: (total) => `Total ${total} orders`
+//             }}
+//           />
+//         </Card>
+//       </Space>
+//     </div>
+//   );
+// };
+
+export default Orders;

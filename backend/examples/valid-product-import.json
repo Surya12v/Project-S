@@ -1,0 +1,30 @@
+{
+  "name": "Premium Laptop Pro X1",
+  "sku": "LAP-PRO-X1-2024",
+  "brand": "TechMaster",
+  "category": "electronics/laptops",
+  "description": "High-performance laptop for professionals",
+  "detailedDescription": "<p>Powerful laptop featuring the latest technology...</p>",
+  "keyFeatures": [
+    "16-inch Retina Display",
+    "32GB RAM",
+    "1TB SSD Storage",
+    "12-hour Battery Life"
+  ],
+  "price": 89999.99,
+  "originalPrice": 99999.99,
+  "stockQuantity": 50,
+  "paymentModes": ["Full", "EMI", "COD"],
+  "specifications": {
+    "processor": "Intel Core i9",
+    "ram": "32GB DDR4",
+    "storage": "1TB NVMe SSD"
+  },
+  "images": [
+    "https://example.com/images/laptop-main.jpg"
+  ],
+  "flags": {
+    "isActive": true,
+    "isNew": true
+  }
+}

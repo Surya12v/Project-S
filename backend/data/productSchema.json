@@ -1,0 +1,101 @@
+{
+  "name": "Premium Laptop Pro X1",
+  "sku": "LAP-PRO-X1-2024",
+  "brand": "TechMaster",
+  "category": "electronics/laptops",
+  "description": "High-performance laptop for professionals",
+  "detailedDescription": "<p>Powerful laptop featuring the latest technology...</p>",
+  "keyFeatures": [
+    "16-inch Retina Display",
+    "32GB RAM",
+    "1TB SSD Storage",
+    "12-hour Battery Life"
+  ],
+  "price": 89999.99,
+  "originalPrice": 99999.99,
+  "costPrice": 75000.00,
+  "stockQuantity": 50,
+  "minStockLevel": 10,
+  "maxOrderQuantity": 2,
+  "paymentModes": [
+    "Full",
+    "EMI",
+    "COD",
+    "UPI",
+    "Net Banking"
+  ],
+  "specifications": {
+    "processor": "Intel Core i9",
+    "ram": "32GB DDR4",
+    "storage": "1TB NVMe SSD",
+    "display": "16-inch 4K",
+    "graphics": "NVIDIA RTX 4080"
+  },
+  "dimensions": {
+    "weight": 2.1,
+    "length": 35.5,
+    "width": 24.3,
+    "height": 1.6
+  },
+  "color": "Space Gray",
+  "material": "Aluminum",
+  "images": [
+    "https://example.com/images/laptop-main.jpg",
+    "https://example.com/images/laptop-side.jpg",
+    "https://example.com/images/laptop-back.jpg"
+  ],
+  "videoUrl": "https://youtube.com/watch?v=product-video",
+  "galleryImages": [
+    "https://example.com/images/gallery1.jpg",
+    "https://example.com/images/gallery2.jpg"
+  ],
+  "seo": {
+    "title": "Premium Laptop Pro X1 - High Performance Professional Laptop",
+    "description": "Experience ultimate performance with the Premium Laptop Pro X1...",
+    "keywords": [
+      "laptop",
+      "premium laptop",
+      "professional laptop",
+      "high performance"
+    ]
+  },
+  "tags": [
+    "premium",
+    "professional",
+    "high-performance",
+    "laptop"
+  ],
+  "flags": {
+    "isActive": true,
+    "isFeatured": true,
+    "isNew": true,
+    "isBestseller": false,
+    "isDiscounted": true,
+    "allowReviews": true,
+    "trackQuantity": true,
+    "requiresShipping": true
+  },
+  "availability": {
+    "availableFrom": "2024-01-01T00:00:00Z",
+    "availableUntil": "2025-12-31T23:59:59Z",
+    "shippingClass": "express",
+    "taxClass": "standard"
+  },
+  "ratings": {
+    "average": 4.5,
+    "count": 127,
+    "distribution": {
+      "5": 80,
+      "4": 30,
+      "3": 10,
+      "2": 5,
+      "1": 2
+    }
+  },
+  "metadata": {
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-01-15T15:30:00Z",
+    "createdBy": "admin@example.com",
+    "lastModifiedBy": "manager@example.com"
+  }
+}
