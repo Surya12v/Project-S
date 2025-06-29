@@ -14,7 +14,6 @@ import AdminOrders from "./pages/Admin/Orders/AdminOrders";
 import Cart from "./pages/Cart/Cart";
 import Checkout from "./pages/Checkout/Checkout";
 import ProductView from "./pages/ProductView/ProductView";
-import MainLayout from "./components/Layout/MainLayout";
 import Wishlist from "./pages/Wishlist/Wishlist";
 import Account from "./pages/Account/Account";
 import { UserProvider } from './contexts/UserContext';
@@ -92,7 +91,6 @@ const App = () => {
       <PersistGate loading={null} persistor={persistor}>
         <BrowserRouter>
           <UserProvider>
-            <MainLayout>
               <AnimatePresence mode="wait">
                 <Routes>
                   <Route path="/" element={<AuthPages />} />
@@ -197,7 +195,6 @@ const App = () => {
                   />
                 </Routes>
               </AnimatePresence>
-            </MainLayout>
           </UserProvider>
         </BrowserRouter>
       </PersistGate>

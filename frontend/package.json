@@ -21,6 +21,7 @@
     "axios": "^1.10.0",
     "cookie-parser": "^1.4.7",
     "csurf": "^1.11.0",
+    "firebase": "^11.9.1",
     "framer-motion": "^12.16.0",
     "lottie-react": "^2.4.1",
     "react": "^19.1.0",

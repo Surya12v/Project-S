@@ -1,15 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { API_URL } from '../../config/constants';
+import axios from 'axios';
 
 export const fetchAdminUsers = createAsyncThunk(
   'users/fetchAdminUsers',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/api/admin/users`, { credentials: 'include' });
-      const data = await response.json();
+      const response = await axios.get(`${API_URL}/api/admin/users`, { withCredentials: true });
+      const data = response.data;
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );

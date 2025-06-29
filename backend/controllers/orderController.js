@@ -151,6 +151,7 @@ exports.getAllOrders = async (req, res) => {
       .populate('userId', 'displayName email')
       .populate('items.productId')
       .sort({ createdAt: -1 });
+      console.log("All orders fetched:", orders);
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });

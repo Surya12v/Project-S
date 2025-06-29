@@ -2,9 +2,14 @@ const Product = require('../models/Product');
 const logger = require('../utils/logger');
 
 // Define all functions without exports.
+// ...existing code...
 const bulkImport = async (req, res) => {
   try {
+    console.log('--- BULK IMPORT START ---');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+
     if (!req.body || (Array.isArray(req.body) && req.body.length === 0)) {
+      console.log('No products provided for import');
       return res.status(400).json({
         success: false,
         error: 'No products provided for import'
@@ -12,6 +17,8 @@ const bulkImport = async (req, res) => {
     }
 
     const products = Array.isArray(req.body) ? req.body : [req.body];
+    console.log(`Received ${products.length} products for bulk import`);
+    console.log('Products:', JSON.stringify(products, null, 2));
 
     // Validate required fields
     const invalidProducts = products.filter(p => 
@@ -19,6 +26,7 @@ const bulkImport = async (req, res) => {
     );
 
     if (invalidProducts.length > 0) {
+      console.log('Invalid products:', JSON.stringify(invalidProducts, null, 2));
       return res.status(400).json({
         success: false,
         error: 'Missing required fields in some products',
@@ -26,10 +34,13 @@ const bulkImport = async (req, res) => {
       });
     }
 
+    console.log('All products passed validation. Proceeding to insertMany...');
     const result = await Product.insertMany(products, {
       ordered: false,
       rawResult: true
     });
+
+    console.log('InsertMany result:', JSON.stringify(result, null, 2));
 
     res.status(201).json({
       success: true,
@@ -37,8 +48,12 @@ const bulkImport = async (req, res) => {
       insertedIds: result.insertedIds
     });
 
+    console.log('--- BULK IMPORT END ---');
   } catch (error) {
     console.error('Bulk import error:', error);
+    if (error.writeErrors) {
+      console.error('Write errors:', JSON.stringify(error.writeErrors, null, 2));
+    }
     res.status(400).json({
       success: false,
       error: error.message || 'Error importing products',
@@ -46,10 +61,14 @@ const bulkImport = async (req, res) => {
     });
   }
 };
+// ...existing code...
 
 const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find();
+    console.log(`Fetching all products...`);
+    console.log(products);
+    console.log(`Found ${products.length} products in database`);
     res.status(200).json(products);
   } catch (error) {
     logger.error('Get all products error:', error);
@@ -100,7 +119,7 @@ const deleteProduct = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     console.log('Fetching products...');
-    const products = await Product.find({ 'flags.isActive': true })
+    const products = await Product.find({ 'isActive': true })
       .select('-metadata -audit -mongoDB')
       .sort({ 'metadata.createdAt': -1 });
     

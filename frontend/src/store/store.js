@@ -6,6 +6,8 @@ import cartReducer from './slices/cartSlice';
 import productReducer from './slices/productSlice';
 import orderReducer from './slices/orderSlice';
 import userReducer from './slices/userSlice';
+import adminProductReducer from './slices/adminProductSlice';
+import wishlistReducer from './slices/wishlistSlice'; // <-- Add this line
 
 const persistConfig = {
   key: 'root',
@@ -19,7 +21,9 @@ export const store = configureStore({
     cart: persistReducer(persistConfig, cartReducer),
     products: productReducer,
     orders: orderReducer,
-    users: userReducer
+    users: userReducer,
+    adminProducts: adminProductReducer,
+    wishlist: wishlistReducer // <-- Add this line
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -4,6 +4,7 @@ import { API_URL } from '../../config/constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchOrders } from '../../store/slices/orderSlice';
 import axios from 'axios';
+import NavBar from '../../components/NavBar/NavBar';
 
 const { Title } = Typography;
 
@@ -70,6 +71,7 @@ const Orders = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <NavBar />
       <Space direction="vertical" style={{ width: '100%' }}>
         <Title level={2}>My Orders</Title>
         {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
@@ -89,19 +91,5 @@ const Orders = () => {
     </div>
   );
 };
-
-// export default Orders;
-//             loading={loading}
-//             rowKey="_id"
-//             pagination={{
-//               pageSize: 10,
-//               showTotal: (total) => `Total ${total} orders`
-//             }}
-//           />
-//         </Card>
-//       </Space>
-//     </div>
-//   );
-// };
 
 export default Orders;

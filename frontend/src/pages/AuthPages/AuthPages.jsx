@@ -47,6 +47,7 @@ import {
 import { motion } from 'framer-motion';
 import { AUTH_ROUTES } from '../../config/constants';
 import axios from 'axios';
+import { getCsrfToken } from '../../utils/csrf';
 
 const { Title, Text, Paragraph } = Typography;
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -189,16 +190,6 @@ const AuthPages = () => {
     }
   };
   
-const getCsrfToken = async () => {
-  console.log('Fetching CSRF token...2');
-  const res = await axios.get('http://localhost:5000/api/csrf-token', {
-    withCredentials: true
-  });
- 
-  console.log('CSRF Token Response:', res);
-  return res.data.csrfToken;
-};
-
   const handleSubmit = async (values) => {
     console.log('Form Values:', values);
   // setLoading(true);

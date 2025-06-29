@@ -1,17 +1,22 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { API_URL } from '../../config/constants';
+import axios from 'axios';
+import { getCsrfToken } from '../../utils/csrf';
+
 
 export const fetchCart = createAsyncThunk(
   'cart/fetchCart',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/api/cart`, {
-        credentials: 'include'
+      const csrfToken = await getCsrfToken(); // <-- Await the promise
+      console.log(`Using CSRF token: ${csrfToken}`);
+      const response = await axios.get(`${API_URL}/api/cart`, {
+        withCredentials: true,
+        headers: { 'X-CSRF-Token': csrfToken }, // <-- Use correct header name
       });
-      const data = await response.json();
-      return data;
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -20,16 +25,38 @@ export const addToCart = createAsyncThunk(
   'cart/addToCart',
   async ({ productId, quantity }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/api/cart/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ productId, quantity })
-      });
-      const data = await response.json();
-      return data;
+      const csrfToken = await getCsrfToken(); // <-- Await the promise
+      console.log('csrfToken:', csrfToken);
+      const response = await axios.post(
+        `${API_URL}/api/cart/add`,
+        { productId, quantity },
+        {
+          withCredentials: true,
+          headers: {
+            'X-CSRF-Token': csrfToken, // <-- Use correct header name
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const removeFromCart = createAsyncThunk(
+  'cart/removeFromCart',
+  async (productId, { rejectWithValue }) => {
+    try {
+      const csrfToken = await getCsrfToken();
+      await axios.delete(`${API_URL}/api/cart/${productId}`, {
+        withCredentials: true,
+        headers: { 'X-CSRF-Token': csrfToken }
+      });
+      return productId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -39,12 +66,12 @@ const cartSlice = createSlice({
   initialState: {
     items: [],
     loading: false,
-    error: null
+    error: null,
   },
   reducers: {
     clearCart: (state) => {
       state.items = [];
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -62,8 +89,11 @@ const cartSlice = createSlice({
       })
       .addCase(addToCart.fulfilled, (state, action) => {
         state.items = action.payload.items;
+      })
+      .addCase(removeFromCart.fulfilled, (state, action) => {
+        state.items = state.items.filter(item => item.productId._id !== action.payload);
       });
-  }
+  },
 });
 
 export const { clearCart } = cartSlice.actions;

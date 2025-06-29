@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Row, Col, Typography, Button, Space, Image, 
+import {
+  Row, Col, Typography, Button, Space, Image,
   Tabs, Card, List, Tag, Rate, message, Spin, Result,
-  Breadcrumb, InputNumber, Divider,Progress
+  Breadcrumb, InputNumber, Divider, Progress
 } from 'antd';
 import {
   ShoppingCartOutlined, HeartOutlined, ShareAltOutlined,
   ThunderboltOutlined, CheckCircleOutlined, PlayCircleOutlined
 } from '@ant-design/icons';
-import { API_URL } from '../../config/constants';
-import axios from 'axios';
+import Navbar from '../../components/NavBar/NavBar';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts } from '../../store/slices/productSlice';
+import { addToCart } from '../../store/slices/cartSlice';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -18,44 +20,24 @@ const { TabPane } = Tabs;
 const ProductView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { items: products = [], loading: productsLoading } = useSelector(state => state.products) || {};
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    fetchProduct();
-  }, [id]);
-
-  const fetchProduct = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_URL}/api/products/${id}`);
-      if (response.status !== 200) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = response.data;
-      console.log('Product data:', data);
-      setProduct(data);
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      message.error('Failed to load product');
-      navigate('/products');
-    } finally {
-      setLoading(false);
+    if (!products.length) {
+      dispatch(fetchProducts());
     }
-  };
+  }, [dispatch, products.length]);
+
+  const product = products.find(p => p._id === id);
 
   const handleAddToCart = async () => {
+    if (!product) return;
     try {
-      await axios.post(`${API_URL}/api/cart/add`, {
-        productId: product._id,
-        quantity
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-      });
+      await dispatch(addToCart({ productId: product._id, quantity })).unwrap();
       message.success('Added to cart');
-    } catch (error) {
+    } catch {
       message.error('Failed to add to cart');
     }
   };
@@ -64,7 +46,7 @@ const ProductView = () => {
     try {
       await handleAddToCart();
       navigate('/checkout');
-    } catch (error) {
+    } catch {
       message.error('Failed to process order');
     }
   };
@@ -73,7 +55,7 @@ const ProductView = () => {
     return Math.round(((originalPrice - price) / originalPrice) * 100);
   };
 
-  if (loading) {
+  if (productsLoading) {
     return (
       <div style={{ padding: '50px', textAlign: 'center' }}>
         <Spin size="large" />
@@ -101,6 +83,7 @@ const ProductView = () => {
 
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+      <Navbar />
       <Row gutter={[24, 24]}>
         {/* Left Column - Images */}
         <Col xs={24} md={12}>
@@ -123,7 +106,7 @@ const ProductView = () => {
                 ))}
               </Row>
             </Image.PreviewGroup>
-            
+
             {product.videoUrl && (
               <div style={{ marginTop: '16px' }}>
                 <Title level={5}>Product Video</Title>
@@ -145,8 +128,8 @@ const ProductView = () => {
             </Breadcrumb>
 
             <Space direction="vertical" size="small">
-              <Tag color={product.flags.isActive ? 'success' : 'error'}>
-                {product.flags.isActive ? 'Active' : 'Inactive'}
+              <Tag color={product.isActive ? 'success' : 'error'}>
+                {product.isActive ? 'Active' : 'Inactive'}
               </Tag>
               <Text type="secondary">{product.brand}</Text>
               <Title level={2} style={{ margin: 0 }}>{product.name}</Title>
@@ -216,7 +199,7 @@ const ProductView = () => {
                 <div>
                   <Text strong>Accepted Payment Methods:</Text>
                   <div style={{ marginTop: 8 }}>
-                    {product.paymentModes.map(mode => (
+                    {product.paymentModes?.map(mode => (
                       <Tag key={mode} color="blue" style={{ margin: 4 }}>
                         {mode}
                       </Tag>
@@ -289,7 +272,7 @@ const ProductView = () => {
 
           <TabPane tab="Specifications" key="2">
             <List
-              dataSource={Object.entries(product.specifications)}
+              dataSource={Object.entries(product.specifications || {})}
               renderItem={([key, value]) => (
                 <List.Item>
                   <Row style={{ width: '100%' }}>
@@ -307,7 +290,7 @@ const ProductView = () => {
             <Divider>Physical Specifications</Divider>
 
             <List
-              dataSource={Object.entries(product.dimensions)}
+              dataSource={Object.entries(product.dimensions || {})}
               renderItem={([key, value]) => (
                 <List.Item>
                   <Row style={{ width: '100%' }}>
@@ -338,7 +321,7 @@ const ProductView = () => {
                   </Card>
                 </Col>
                 <Col span={16}>
-                  {Object.entries(product.ratings.distribution)
+                  {Object.entries(product.ratings.distribution || {})
                     .sort(([a], [b]) => Number(b) - Number(a))
                     .map(([stars, count]) => (
                       <Row key={stars} align="middle" style={{ marginBottom: 8 }}>
@@ -367,4 +350,3 @@ const ProductView = () => {
 };
 
 export default ProductView;
-;

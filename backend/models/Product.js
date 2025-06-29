@@ -1,43 +1,58 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const productSchema = new Schema({
-  // Required base fields
-  name: { type: String, required: true },
-  sku: { type: String, required: true, unique: true },
-  price: { type: Number, required: true },
-  
-  // Basic fields with defaults
-  isActive: { type: Boolean, default: true },
-  stockQuantity: { type: Number, default: 0 },
-  
-  // Dynamic fields storage
-  attributes: { type: Map, of: Schema.Types.Mixed },
-  specifications: { type: Map, of: Schema.Types.Mixed },
-  metadata: { type: Map, of: Schema.Types.Mixed },
-  
-  // Custom fields container
-  customFields: { type: Map, of: Schema.Types.Mixed },
-  
-  // Schema version for migrations
-  schemaVersion: { type: Number, default: 1 }
-}, {
-  timestamps: true,
-  strict: false, // Allow fields not specified in schema
-  storeSubdocValidationError: false // Flexible validation
-});
+const productSchema = new Schema(
+  {
+    // Required base fields
+    name: { type: String, required: true },
+    sku: { type: String, required: true, unique: true },
+    price: { type: Number, required: true },
+
+    // Basic fields with defaults
+    isActive: { type: Boolean, default: true },
+    stockQuantity: { type: Number, default: 0 },
+
+    // Dynamic fields storage
+    attributes: { type: Map, of: Schema.Types.Mixed },
+    specifications: [
+      {
+        key: { type: String, required: true },
+        value: { type: String, required: true },
+      },
+    ],
+    metadata: { type: Map, of: Schema.Types.Mixed },
+
+    // Custom fields container
+    customFields: { type: Map, of: Schema.Types.Mixed },
+
+    // Schema version for migrations
+    schemaVersion: { type: Number, default: 1 },
+
+    // New fields
+    costPrice: { type: Number, default: 0 }, // Internal cost
+    originalPrice: { type: Number, default: 0 }, // MRP/List price
+    taxClass: { type: String, default: "standard" }, // e.g., 'standard', 'exempt'
+    taxRate: { type: Number }, // Optional override
+    isTaxInclusive: { type: Boolean, default: true }, // Is tax included in price
+  },
+  {
+    timestamps: true,
+    strict: false, // Allow fields not specified in schema
+    storeSubdocValidationError: false, // Flexible validation
+  }
+);
 
 // Index for common queries
 productSchema.index({ sku: 1 }, { unique: true });
-productSchema.index({ 'attributes.category': 1 });
-productSchema.index({ 'attributes.brand': 1 });
+productSchema.index({ "attributes.category": 1 });
+productSchema.index({ "attributes.brand": 1 });
 productSchema.index({ isActive: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ stockQuantity: 1 });
 productSchema.index({ createdAt: -1 });
 
 // Method to add custom fields
-productSchema.methods.addCustomField = function(key, value) {
+productSchema.methods.addCustomField = function (key, value) {
   if (!this.customFields) {
     this.customFields = new Map();
   }
@@ -45,14 +60,17 @@ productSchema.methods.addCustomField = function(key, value) {
 };
 
 // Static method to add new attribute to schema
-productSchema.statics.addAttribute = function(attributeName, attributeType = Schema.Types.Mixed) {
+productSchema.statics.addAttribute = function (
+  attributeName,
+  attributeType = Schema.Types.Mixed
+) {
   if (!this.schema.path(`attributes.${attributeName}`)) {
     this.schema.add({
       attributes: {
-        [attributeName]: attributeType
-      }
+        [attributeName]: attributeType,
+      },
     });
   }
 };
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.model("Product", productSchema);

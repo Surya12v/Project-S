@@ -1,18 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { API_URL } from '../../config/constants';
+import axios from 'axios';
 
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/auth/check-session`, {
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const response = await axios.get(`${API_URL}/auth/check-session`, { withCredentials: true });
+      const data = response.data;
       if (!data.authenticated) throw new Error('Not authenticated');
       return data.user;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -21,12 +20,9 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'GET',
-        credentials: 'include'
-      });
+      await axios.get(`${API_URL}/auth/logout`, { withCredentials: true });
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -65,3 +61,4 @@ const authSlice = createSlice({
 });
 
 export default authSlice.reducer;
+

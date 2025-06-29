@@ -62,6 +62,7 @@ app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/wishlist', require('./routes/wishlistRoutes'));
 
 // ❌ Exclude CSRF on Razorpay webhook
 app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), (req, res) => {
