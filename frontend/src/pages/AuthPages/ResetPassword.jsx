@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Form, Input, Button, Typography, notification } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import { AUTH_ROUTES } from '../../config/constants';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { resetPassword as resetPasswordThunk } from '../../store/slices/authSlice';
 
 const { Title, Text } = Typography;
 
@@ -12,33 +12,21 @@ const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector(state => state.auth);
 
   const handleSubmit = async (values) => {
     try {
-      const response = await axios.post(
-        `${AUTH_ROUTES.GOOGLE.replace('/google', '')}/reset-password/${token}`,
-        { password: values.password },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-
-      const data = response.data;
-      
-      if (response.status === 200) {
-        notification.success({
-          message: 'Success',
-          description: 'Password has been reset successfully'
-        });
-        navigate('/');
-      } else {
-        notification.error({
-          message: 'Error',
-          description: data.message || 'Failed to reset password'
-        });
-      }
+      await dispatch(resetPasswordThunk({ token, password: values.password })).unwrap();
+      notification.success({
+        message: 'Success',
+        description: 'Password has been reset successfully'
+      });
+      navigate('/');
     } catch (error) {
       notification.error({
         message: 'Error',
-        description: 'Failed to connect to server'
+        description: error || 'Failed to reset password'
       });
     }
   };
@@ -104,7 +92,7 @@ const ResetPassword = () => {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" block size="large">
+            <Button type="primary" htmlType="submit" block size="large" loading={loading}>
               Reset Password
             </Button>
           </Form.Item>

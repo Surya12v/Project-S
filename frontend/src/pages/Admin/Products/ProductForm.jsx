@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import {
   Form,
   Input,
@@ -25,6 +25,7 @@ import {
   FileImageOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { uploadImageToFirebase, deleteImageFromFirebase } from "../../../utils/firebaseImage";
 import { calculateDiscountPercent, calculateFinalPrice } from "../../../utils/priceUtils";
 
@@ -107,6 +108,7 @@ const ProductForm = ({
     }
   };
 
+  // Fix: Ensure image URLs are preserved if not changed
   // Convert image URLs to Upload file list
   const getFileList = (urls) =>
     (urls || []).map((url, idx) => ({
@@ -117,20 +119,27 @@ const ProductForm = ({
     }));
 
   // Ensure form is initialized with correct image URLs when editing
-  React.useEffect(() => {
-    if (editingProduct) {
+useEffect(() => {
+  if (editingProduct) {
+    if (!form.getFieldValue("images")) {
       form.setFieldsValue({
-        ...editingProduct,
-        images: editingProduct.images || [],
-        galleryImages: editingProduct.galleryImages || [],
+        images: getFileList(editingProduct.images),
       });
     }
-  }, [editingProduct, form]);
+    if (!form.getFieldValue("galleryImages")) {
+      form.setFieldsValue({
+        galleryImages: getFileList(editingProduct.galleryImages),
+      });
+    }
+    
+  }
+}, [editingProduct, form]);
+
 
   // Watch pricing fields and update preview
   Form.useWatch(["price", "originalPrice", "taxClass", "taxRate", "isTaxInclusive"], form);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const values = form.getFieldsValue([
       "price",
       "originalPrice",
@@ -156,9 +165,22 @@ const ProductForm = ({
   ]);
 
   // When submitting, send all values as-is to the parent
-  const onFinish = (values) => {
-    handleSubmit(values);
-  };
+const onFinish = (values) => {
+  const extractUrls = arr =>
+    (arr || []).map(file =>
+      typeof file === "string"
+        ? file
+        : file.url || file.thumbUrl
+    );
+  handleSubmit({
+    ...values,
+    images: extractUrls(values.images),
+    galleryImages: extractUrls(values.galleryImages),
+    availableFrom: values.availableFrom ? values.availableFrom.toISOString() : null,
+    availableUntil: values.availableUntil ? values.availableUntil.toISOString() : null,
+  });
+};
+
 
   return (
     <Form
@@ -442,6 +464,75 @@ const ProductForm = ({
               <Select.Option value="Net Banking">Net Banking</Select.Option>
             </Select>
           </Form.Item>
+
+          {/* --- EMI Plan Section --- */}
+          <Divider orientation="left">EMI Plans</Divider>
+          <Form.List name="emiPlans">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Row key={key} gutter={8} align="middle">
+                    <Col span={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "months"]}
+                        label="Duration (months)"
+                        rules={[{ required: true, message: "Enter months" }]}
+                      >
+                        <InputNumber min={1} max={60} style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "interestRate"]}
+                        label="Interest Rate (%)"
+                        rules={[{ required: true, message: "Enter rate" }]}
+                      >
+                        <InputNumber min={0} max={100} style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "minAmount"]}
+                        label="Min Amount"
+                      >
+                        <InputNumber min={0} style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "maxAmount"]}
+                        label="Max Amount"
+                      >
+                        <InputNumber min={0} style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Col>
+                    <Col>
+                      <Button
+                        type="text"
+                        danger
+                        onClick={() => remove(name)}
+                        icon={<DeleteOutlined />}
+                      />
+                    </Col>
+                  </Row>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    Add EMI Plan
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </TabPane>
 
         <TabPane tab="Specifications" key="3">

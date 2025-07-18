@@ -1,5 +1,9 @@
 import React, { useEffect } from 'react';
-import { Table, Tag, Typography, Space, Card, message } from 'antd';
+import { Table, Tag, Typography, Space, Card, message, Button } from 'antd';
+import {
+  UserOutlined, LockOutlined, SettingOutlined, MailOutlined, PhoneOutlined, EditOutlined, UploadOutlined, DeleteOutlined, CreditCardOutlined, HomeOutlined, HeartOutlined, BellOutlined, HistoryOutlined, LogoutOutlined, ExclamationCircleOutlined, ShoppingCartOutlined, CheckCircleOutlined, ClockCircleOutlined, TruckOutlined, StarOutlined, GiftOutlined, QuestionCircleOutlined, SafetyOutlined, WalletOutlined
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../config/constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchOrders } from '../../store/slices/orderSlice';
@@ -9,6 +13,7 @@ import NavBar from '../../components/NavBar/NavBar';
 const { Title } = Typography;
 
 const Orders = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { items: orders, loading, error } = useSelector(state => state.orders);
 
@@ -16,6 +21,12 @@ const Orders = () => {
     dispatch(fetchOrders());
   }, [dispatch]);
 
+   const handleCardClick = (e, productId) => {
+    console.log("Clicked product ID:", productId);
+    // You can navigate or fetch data based on this ID
+    navigate(`/product/${productId}`);
+    
+  };
   const columns = [
     // {
     //   title: 'Order ID',
@@ -67,6 +78,36 @@ const Orders = () => {
         </Tag>
       ),
     },
+    {
+                          title: 'Actions',
+                          dataIndex: 'actions',
+                          key: 'actions', 
+                          render: (_, order) => (
+                            <Space>
+                              <Button
+                                size="small"
+                                type="primary"
+                                ghost
+                                onClick={(e) =>
+                                  handleCardClick(
+                                    e,
+                                    order.items?.map((item) => item.productId?._id) || []
+                                  )
+                                }
+                              >
+                                View Details
+                              </Button>
+                              <Button size="small" icon={<TruckOutlined />}>
+                                Track
+                              </Button>
+                              {order.orderStatus === 'DELIVERED' && (
+                                <Button size="small" icon={<StarOutlined />}>
+                                  Review
+                                </Button>
+                              )}
+                            </Space>
+                          )
+                        },
   ];
 
   return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Menu, Button, Space } from 'antd';
 import {
   LogoutOutlined,
@@ -11,25 +11,20 @@ import {
   ShoppingCartOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AUTH_ROUTES, API_URL } from '../../config/constants';
-import axios from 'axios';
+import { AUTH_ROUTES } from '../../config/constants';
 import { Typography } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import { checkAuth, logout } from '../../store/slices/authSlice';
+
 const NavBar = () => {
-  const [user, setUser] = useState(null);
+  const dispatch = useDispatch();
+  const { user, isAuthenticated } = useSelector(state => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
-        setUser(res.data);
-      } catch (error) {
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
+    dispatch(checkAuth());
+  }, [dispatch]);
 
   const isAdmin = user?.role === 'admin';
 
@@ -58,7 +53,8 @@ const NavBar = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await dispatch(logout());
     window.location.href = AUTH_ROUTES.LOGOUT;
   };
 
@@ -157,6 +153,16 @@ const NavBar = () => {
           type="text"
           icon={<ShoppingCartOutlined />}
           onClick={() => navigate('/cart')}
+          style={{
+            color: 'white',
+            border: '1px solid rgba(255,255,255,0.3)',
+            marginRight: 8
+          }}
+        />
+        <Button
+          type="text"
+          icon={<UserOutlined />}
+          onClick={() => navigate('/account')}
           style={{
             color: 'white',
             border: '1px solid rgba(255,255,255,0.3)',

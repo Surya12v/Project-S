@@ -12,8 +12,6 @@ const { isAdmin } = require('../middlewares/authMiddleware'); // Fix: middleware
 
 // Debug endpoint to check session
 router.get('/check-session', (req, res) => {
-  console.log('Session:=================', req.session); // <--- Check this output
-  console.log('User:-----------------', req.user);       // <--- And this output
   res.json({
     authenticated: req.isAuthenticated(),
     user: req.user

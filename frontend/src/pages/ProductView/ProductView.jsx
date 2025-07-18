@@ -9,10 +9,12 @@ import {
   ShoppingCartOutlined, HeartOutlined, ShareAltOutlined,
   ThunderboltOutlined, CheckCircleOutlined, PlayCircleOutlined
 } from '@ant-design/icons';
-import Navbar from '../../components/NavBar/NavBar';
+import ReactPlayer from 'react-player';
+import NavBar from '../../components/NavBar/NavBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../../store/slices/productSlice';
 import { addToCart } from '../../store/slices/cartSlice';
+import EmiModule from '../../components/Emi/emi';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -23,6 +25,7 @@ const ProductView = () => {
   const dispatch = useDispatch();
   const { items: products = [], loading: productsLoading } = useSelector(state => state.products) || {};
   const [quantity, setQuantity] = useState(1);
+  const [selectedEmiPlan, setSelectedEmiPlan] = useState(null);
 
   useEffect(() => {
     if (!products.length) {
@@ -42,6 +45,7 @@ const ProductView = () => {
     }
   };
 
+  console.log("Product:", product.videoUrl);
   const handleBuyNow = async () => {
     try {
       await handleAddToCart();
@@ -81,9 +85,12 @@ const ProductView = () => {
     );
   }
 
+  // Extract EMI plans from product (if present)
+  const emiPlans = product?.emiPlans || [];
+
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-      <Navbar />
+      <NavBar />
       <Row gutter={[24, 24]}>
         {/* Left Column - Images */}
         <Col xs={24} md={12}>
@@ -110,9 +117,13 @@ const ProductView = () => {
             {product.videoUrl && (
               <div style={{ marginTop: '16px' }}>
                 <Title level={5}>Product Video</Title>
-                <Button icon={<PlayCircleOutlined />} block>
-                  Watch Video
-                </Button>
+                <ReactPlayer
+                  url={product.videoUrl}
+                  controls
+                  width="100%"
+                  height="300px"
+                  style={{ borderRadius: 8, overflow: 'hidden' }}
+                />
               </div>
             )}
           </Card>
@@ -163,6 +174,18 @@ const ProductView = () => {
                 <Text type="secondary">Inclusive of all taxes</Text>
               </Space>
             </Card>
+
+            {/* --- EMI Module Integration --- */}
+            {emiPlans.length > 0 && (
+              <EmiModule
+                productId={product._id}
+                price={product.price}
+                onSelectEmiPlan={setSelectedEmiPlan}
+                selectedPlan={selectedEmiPlan}
+                disabled={product.stockQuantity === 0}
+                plans={emiPlans}
+              />
+            )}
 
             {/* Key Features */}
             <Card title="Key Features">
@@ -235,6 +258,7 @@ const ProductView = () => {
                   onClick={handleAddToCart}
                   block
                   size="large"
+                  disabled={product.stockQuantity === 0}
                 >
                   Add to Cart
                 </Button>
@@ -251,6 +275,7 @@ const ProductView = () => {
                     borderColor: '#ff6b35',
                     color: 'white'
                   }}
+                  disabled={product.stockQuantity === 0}
                 >
                   Buy Now
                 </Button>

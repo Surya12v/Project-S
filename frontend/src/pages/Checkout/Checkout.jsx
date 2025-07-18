@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Form, Input, Button, Steps, Card, Radio, Space,
-  Typography, Divider, message, List, Checkbox, Row, Col, Select, Spin
+  Typography, Divider, message, List, Checkbox, Row, Col, Select, Spin, Modal
 } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -12,6 +12,7 @@ import { calculateFinalPrice } from '../../utils/priceUtils';
 import NavBar from '../../components/NavBar/NavBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { placeOrder } from '../../store/slices/orderSlice';
+import EmiModule from '../../components/Emi/emi';
 
 const { Title, Text } = Typography;
 const { Step } = Steps;
@@ -39,6 +40,8 @@ const Checkout = () => {
   const [billingAddress, setBillingAddress] = useState({});
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [selectedEmiPlan, setSelectedEmiPlan] = useState(null);
+  const [emiModalVisible, setEmiModalVisible] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -161,6 +164,27 @@ const Checkout = () => {
     setCurrent(3);
   };
 
+  // Find EMI-eligible product and its plans (for single buy-now or cart)
+  const getEmiEligibleProduct = () => {
+    if (location.state && location.state.buyNowProduct) {
+      const p = location.state.buyNowProduct;
+      return p.paymentModes?.includes('EMI') && Array.isArray(p.emiPlans) && p.emiPlans.length > 0
+        ? { product: p, emiPlans: p.emiPlans }
+        : null;
+    }
+    // For cart, only support EMI if one product is selected and it supports EMI
+    const selected = cart.items.filter(item => selectedItems.includes(item.productId._id));
+    if (selected.length === 1) {
+      const p = selected[0].productId;
+      return p.paymentModes?.includes('EMI') && Array.isArray(p.emiPlans) && p.emiPlans.length > 0
+        ? { product: p, emiPlans: p.emiPlans }
+        : null;
+    }
+    return null;
+  };
+
+  const emiEligible = getEmiEligibleProduct();
+
   // Place order
   const placeOrderHandler = async () => {
     setPlacingOrder(true);
@@ -195,6 +219,14 @@ const Checkout = () => {
       promo: appliedPromo?.code,
       transactionId
     };
+
+    // --- EMI: Add emiPlan to payload if EMI selected ---
+    if (orderDetails.paymentMode === 'EMI' && selectedEmiPlan && emiEligible) {
+      orderPayload.emiPlan = {
+        productId: emiEligible.product._id,
+        ...selectedEmiPlan
+      };
+    }
 
     if (orderDetails.paymentMode === 'ONLINE') {
       try {
@@ -476,7 +508,18 @@ const Checkout = () => {
               label="Select Payment Method"
               rules={[{ required: true, message: 'Please select a payment method' }]}
             >
-              <Radio.Group size="large">
+              <Radio.Group
+                size="large"
+                onChange={e => {
+                  setSelectedEmiPlan(null);
+                  // If EMI selected, open modal and reset paymentMode to undefined
+                  if (e.target.value === 'EMI' && emiEligible) {
+                    setEmiModalVisible(true);
+                    // Optionally reset paymentMode so form doesn't proceed
+                    setOrderDetails(prev => ({ ...prev, paymentMode: undefined }));
+                  }
+                }}
+              >
                 <Space direction="vertical">
                   {getAvailablePaymentModes().map(mode => (
                     <Radio value={mode} key={mode}>{mode}</Radio>
@@ -515,6 +558,30 @@ const Checkout = () => {
               Review Order
             </Button>
           </Form>
+          {/* EMI Modal */}
+          {emiEligible && (
+            <Modal
+              open={emiModalVisible}
+              onCancel={() => setEmiModalVisible(false)}
+              footer={null}
+              title="Select EMI Plan"
+              destroyOnClose
+            >
+              <EmiModule
+                productId={emiEligible.product._id}
+                price={emiEligible.product.price}
+                plans={emiEligible.emiPlans}
+                onSelectEmiPlan={plan => {
+                  setSelectedEmiPlan(plan);
+                  setEmiModalVisible(false);
+                  // Set paymentMode to EMI after plan selection
+                  setOrderDetails(prev => ({ ...prev, paymentMode: 'EMI' }));
+                }}
+                selectedPlan={selectedEmiPlan}
+                disabled={false}
+              />
+            </Modal>
+          )}
         </Card>
       )
     },
@@ -644,4 +711,3 @@ const Checkout = () => {
 };
 
 export default Checkout;
-    

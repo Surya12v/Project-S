@@ -11,8 +11,9 @@ import {
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/constants';
-import axios from 'axios';
-
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchUserById, updateUserStatus, updateUserRole, fetchAdminUsers } from '../../../store/slices/userSlice';
+import Navbar from '../../../components/Navbar/Navbar';
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -20,58 +21,35 @@ const { Option } = Select;
 const UserDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { selectedUser, loading } = useSelector(state => state.users);
+  // Flatten user for easier access
+  const user = selectedUser && selectedUser.user ? selectedUser.user : selectedUser;
+  console.log('Selected user:', selectedUser);
+  const activity = selectedUser?.activity || {};
+  const orders = activity.orders || [];
+  const cart = activity.cart?.items || [];
+  const wishlist = activity.wishlist?.products || [];
+  const stats = activity.stats || {};
   const [activeTab, setActiveTab] = useState('1');
   const [roleModalVisible, setRoleModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [statusModalVisible, setStatusModalVisible] = useState(false);
 
   useEffect(() => {
-    fetchUserDetails();
+    console.log('Fetching user by ID:', id);
+    dispatch(fetchUserById(id));
+    
+    console.log('API URL:', `${API_URL}/api/admin/users/${id}`);
     // eslint-disable-next-line
-  }, [id]);
-
-  const fetchUserDetails = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/admin/users/${id}`, { withCredentials: true });
-      const data = response.data;
-      console.log('User Details Response:', data);
-      
-      if (data.user) {
-        setUser({
-          ...data.user,
-          orderCount: data.activity?.stats?.orderCount || 0,
-          cartCount: data.activity?.stats?.cartCount || 0,
-          wishlistCount: data.activity?.stats?.wishlistCount || 0,
-          totalSpent: data.activity?.stats?.totalSpent || 0,
-          orders: data.activity?.orders || [],
-          cart: data.activity?.cart?.items || [],
-          wishlist: data.activity?.wishlist?.products || []
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-      message.error('Failed to load user details');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [id, dispatch]);
 
   const handleRoleUpdate = async () => {
     try {
-      const response = await axios.put(`${API_URL}/api/admin/users/${id}/role`, {
-        role: selectedRole
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-      });
-      const data = response.data;
-      if (data) {
-        setUser(prev => ({ ...prev, role: data.role }));
-        message.success('User role updated successfully');
-        setRoleModalVisible(false);
-      }
+      await dispatch(updateUserRole({ userId: id, role: selectedRole })).unwrap();
+      message.success('User role updated successfully');
+      setRoleModalVisible(false);
+      dispatch(fetchAdminUsers()); // Refresh list if needed
     } catch (error) {
       message.error('Failed to update user role');
     }
@@ -79,18 +57,10 @@ const UserDetails = () => {
 
   const handleStatusToggle = async () => {
     try {
-      const response = await axios.put(`${API_URL}/api/admin/users/${id}/status`, {
-        isActive: !user.isActive
-      }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-      });
-      const data = response.data;
-      if (data) {
-        setUser(prev => ({ ...prev, isActive: data.isActive }));
-        message.success(`User account ${data.isActive ? 'enabled' : 'disabled'} successfully`);
-        setStatusModalVisible(false);
-      }
+      await dispatch(updateUserStatus({ userId: id, isActive: !user.isActive })).unwrap();
+      message.success(`User account ${!user.isActive ? 'enabled' : 'disabled'} successfully`);
+      setStatusModalVisible(false);
+      dispatch(fetchAdminUsers()); // Refresh list if needed
     } catch (error) {
       message.error('Failed to update user status');
     }
@@ -107,7 +77,7 @@ const UserDetails = () => {
         timestamp: new Date(user.createdAt).toLocaleString()
       });
     }
-    user?.orders?.forEach(order => {
+    orders.forEach(order => {
       items.push({
         children: `Ordered ${order.items.length} items - ₹${order.totalAmount}`,
         color: 'green',
@@ -120,11 +90,8 @@ const UserDetails = () => {
 
   const timelineItems = generateTimelineItems();
 
-  if (loading) {
-    return <Skeleton active />;
-  }
-
-  if (!user) {
+  // Only show "User not found" if not loading and selectedUser is explicitly null (not undefined)
+  if (!loading && selectedUser === null) {
     return (
       <div style={{ padding: 24 }}>
         <Alert message="User not found" type="error" showIcon />
@@ -132,8 +99,14 @@ const UserDetails = () => {
     );
   }
 
+  // If loading or selectedUser is undefined (initial state), show skeleton
+  if (loading || typeof selectedUser === "undefined") {
+    return <Skeleton active />;
+  }
+
   return (
     <div style={{ padding: '24px' }}>
+      <Navbar />
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* User Header Card */}
         <Card>
@@ -401,4 +374,3 @@ const UserDetails = () => {
 };
 
 export default UserDetails;
-  

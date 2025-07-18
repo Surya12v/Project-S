@@ -1,56 +1,36 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { API_URL } from '../config/constants';
-import axios from 'axios';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { checkAuth } from '../store/slices/authSlice';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { user, loading, isAuthenticated } = useSelector(state => state.auth);
 
+  // Fetch user from slice (calls backend if needed)
   const fetchUser = async () => {
-  try {
-    const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
-    const data = res.data;
-
-    // Only consider it a valid user if essential fields exist
-    if (data && data.displayName && data.email && data.role) {
-      const safeUser = {
-        displayName: data.displayName,
-        email: data.email,
-        role: data.role,
-      };
-
-      setUser(safeUser);
-
-      console.log('User Session:', {
-        name: safeUser.displayName,
-        role: safeUser.role,
-        loginTime: new Date().toLocaleString()
-      });
-    } else {
-      // No valid user data
-      setUser(null);
-    }
-  } catch (error) {
-    console.error('Authentication Error:', error.message);
-    setUser(null);
-  } finally {
-    setLoading(false);
-  }
-};
-
+    await dispatch(checkAuth());
+  };
 
   useEffect(() => {
     fetchUser();
+    // eslint-disable-next-line
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, loading, fetchUser }}>
+    <UserContext.Provider value={{
+      user,
+      setUser: () => {}, // Not needed, but for compatibility
+      loading,
+      fetchUser,
+      isAuthenticated
+    }}>
       {children}
     </UserContext.Provider>
   );
 };
 
 export const useUser = () => useContext(UserContext);
+
 
