@@ -62,7 +62,7 @@ const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 const { Panel } = Collapse;
-const csrfToken = await getCsrfToken();
+
 
 const AdminProducts = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -74,6 +74,7 @@ const AdminProducts = () => {
   const [brands, setBrands] = useState([]);
   const [jsonModalVisible, setJsonModalVisible] = useState(false);
   const [jsonPreview, setJsonPreview] = useState(null);
+  const csrfToken = await getCsrfToken();
   const [jsonInput, setJsonInput] = useState(productJsonTemplate);
   const [deleteModal, setDeleteModal] = useState({
     visible: false,
