@@ -2,10 +2,14 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const crypto = require('crypto'); // Add this for signature verification
+const EmiOrder = require('../models/EmiOrder'); // <-- Add this line
+const Payment = require('../models/Payment');
+const emiController = require('./emiController'); // <-- Add this line
+const notificationController = require('./notificationController');
 
 exports.createOrder = async (req, res) => {
   try {
-    const { shippingAddress, paymentMode } = req.body;
+    const { shippingAddress, paymentMode, emiPlan } = req.body;
     
     // Get user's cart
     const cart = await Cart.findOne({ userId: req.user._id })
@@ -46,6 +50,34 @@ exports.createOrder = async (req, res) => {
       }
     }
 
+    // --- EMI: If paymentMode is EMI, create EMI schedule/order ---
+    let emiOrderId = null;
+    if (paymentMode === 'EMI' && emiPlan && emiPlan.months && emiPlan.monthly) {
+      // Generate schedule
+      const schedule = [];
+      const today = new Date();
+      for (let i = 0; i < emiPlan.months; i++) {
+        const dueDate = new Date(today);
+        dueDate.setMonth(today.getMonth() + i + 1);
+        schedule.push({
+          dueDate,
+          amount: emiPlan.monthly,
+          status: 'DUE'
+        });
+      }
+      // Create EmiOrder
+      const emiOrder = await EmiOrder.create({
+        userId: req.user._id,
+        orderId: null, // will set after order is created
+        productId: orderItems[0]?.productId, // assumes single product for EMI
+        monthlyAmount: emiPlan.monthly,
+        totalAmount: emiPlan.total || (emiPlan.monthly * emiPlan.months),
+        schedule,
+        status: 'ONGOING'
+      });
+      emiOrderId = emiOrder._id;
+    }
+
     // Create order
     const order = await Order.create({
       userId: req.user._id,
@@ -55,9 +87,44 @@ exports.createOrder = async (req, res) => {
       paymentMode,
       razorpayOrderId,
       razorpayPaymentId,
-      razorpaySignature
+      razorpaySignature,
+      emiPlan: emiPlan || null,
+      emiOrderId: emiOrderId || null
     });
     console.log("Order created:", order);
+
+    // Trigger notification for order placement
+    await notificationController.createNotification(
+      req.user._id,
+      'ORDER',
+      'Order Placed',
+      `Your order #${order._id} has been placed successfully.`,
+      `/orders`
+    );
+
+    // If ONLINE or EMI, save payment record
+    if (paymentMode === 'ONLINE' || paymentMode === 'EMI') {
+      await Payment.create({
+        userId: req.user._id,
+        orderId: order._id,
+        paymentType: 'ORDER',
+        amount: totalAmount,
+        status: 'SUCCESS',
+        method: paymentMode,
+        gateway: 'Razorpay',
+        gatewayOrderId: razorpayOrderId,
+        gatewayPaymentId: razorpayPaymentId,
+        gatewaySignature: razorpaySignature,
+        details: { ...req.body },
+        paidAt: new Date(),
+        createdBy: 'user'
+      });
+    }
+
+    // If EMI, update emiOrder with orderId
+    if (emiOrderId) {
+      await EmiOrder.findByIdAndUpdate(emiOrderId, { orderId: order._id });
+    }
 
     // Update product stock
     for (const item of cart.items) {
@@ -176,3 +243,6 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Use the EMI controller's payEmiInstallment for EMI payments
+exports.payEmiInstallment = emiController.payEmiInstallment;

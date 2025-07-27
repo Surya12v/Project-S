@@ -112,28 +112,23 @@ const ProductForm = ({
   // Convert image URLs to Upload file list
   const getFileList = (urls) =>
     (urls || []).map((url, idx) => ({
-      uid: idx,
+      uid: url, // Use url as uid to avoid duplicate keys and preserve mapping
       name: url.split("/").pop(),
       status: "done",
       url,
     }));
 
   // Ensure form is initialized with correct image URLs when editing
-useEffect(() => {
-  if (editingProduct) {
-    if (!form.getFieldValue("images")) {
+  useEffect(() => {
+    if (editingProduct) {
+      // Always set images and galleryImages as Upload file list objects
       form.setFieldsValue({
         images: getFileList(editingProduct.images),
-      });
-    }
-    if (!form.getFieldValue("galleryImages")) {
-      form.setFieldsValue({
         galleryImages: getFileList(editingProduct.galleryImages),
       });
     }
-    
-  }
-}, [editingProduct, form]);
+    // eslint-disable-next-line
+  }, [editingProduct, form]);
 
 
   // Watch pricing fields and update preview
@@ -166,6 +161,7 @@ useEffect(() => {
 
   // When submitting, send all values as-is to the parent
 const onFinish = (values) => {
+  // Fix: Convert Upload file list back to array of URLs
   const extractUrls = arr =>
     (arr || []).map(file =>
       typeof file === "string"
@@ -640,13 +636,13 @@ const onFinish = (values) => {
             name="images"
             label="Product Images"
             extra="Upload high-quality product images. First image will be the main image."
-            valuePropName="images"
-            getValueFromEvent={() => form.getFieldValue("images")}
+            valuePropName="fileList"
+            getValueFromEvent={e => (Array.isArray(e) ? e : e && e.fileList)}
           >
             <Upload
               listType="picture-card"
               customRequest={handleImageUpload}
-              fileList={getFileList(form.getFieldValue("images"))}
+              fileList={form.getFieldValue("images")}
               onRemove={handleImageRemove}
               showUploadList={{ showRemoveIcon: true }}
               multiple
@@ -667,14 +663,16 @@ const onFinish = (values) => {
             <Input placeholder="Enter YouTube or Vimeo URL" />
           </Form.Item>
 
-          <Form.Item name="galleryImages" label="Gallery Images"
-            valuePropName="galleryImages"
-            getValueFromEvent={() => form.getFieldValue("galleryImages")}
+          <Form.Item
+            name="galleryImages"
+            label="Gallery Images"
+            valuePropName="fileList"
+            getValueFromEvent={e => (Array.isArray(e) ? e : e && e.fileList)}
           >
             <Upload
               listType="picture-card"
               customRequest={handleGalleryUpload}
-              fileList={getFileList(form.getFieldValue("galleryImages"))}
+              fileList={form.getFieldValue("galleryImages")}
               onRemove={handleGalleryRemove}
               showUploadList={{ showRemoveIcon: true }}
               multiple

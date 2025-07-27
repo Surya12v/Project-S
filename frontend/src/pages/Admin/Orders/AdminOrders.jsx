@@ -9,11 +9,12 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const AdminOrders = () => {
+  console.log("AdminOrders component rendered");
   const dispatch = useDispatch();
-  const { items: orders = [], loading, updating } = useSelector(state => state.adminOrders) || {};
+  const { items: orders = [], loading, updating } = useSelector(state => state.adminOrders) || {};  
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const { user, loading: userLoading } = useUser(); // <-- get user context
+  const { user, loading: userLoading } = useUser(); 
 
   const columns = [
     {
@@ -89,7 +90,6 @@ const AdminOrders = () => {
   ];
 
   useEffect(() => {
-    // Only fetch orders after user context is loaded and user is admin
     if (!userLoading && user && user.role === 'admin') {
       dispatch(fetchAllOrders());
     }
@@ -101,7 +101,6 @@ const AdminOrders = () => {
       await dispatch(updateOrderStatus({ orderId: selectedOrder._id, status: newStatus })).unwrap();
       message.success('Order status updated successfully');
       setModalVisible(false);
-      // No need to refetch, slice updates state
     } catch (error) {
       message.error('Failed to update order status');
     }

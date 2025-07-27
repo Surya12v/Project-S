@@ -8,11 +8,12 @@ export const fetchAllOrders = createAsyncThunk(
   'adminOrders/fetchAllOrders',
   async (_, { rejectWithValue }) => {
     try {
+      const csrfToken = await getCsrfToken();
       const response = await axios.get(`${API_URL}/api/orders/admin/all`, {
         withCredentials: true,
         headers: { 'X-CSRF-Token': csrfToken }
       });
-    //   console.log(`Fetched orders from ${API_URL}/api/orders/admin/all`, response.data);
+    console.log(`Fetched orders from ${API_URL}/api/orders/admin/all`, response.data);
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);

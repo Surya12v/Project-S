@@ -48,6 +48,12 @@ const NavBar = () => {
       case 'dashboard':
         navigate('/admin/dashboard');
         break;
+      case 'emi':
+        navigate('/emi/order-payment');
+        break;
+      case 'admin-emi':
+        navigate('/admin/emi');
+        break;
       default:
         break;
     }
@@ -74,6 +80,11 @@ const NavBar = () => {
       icon: <UnorderedListOutlined />,
       label: 'My Orders',
     },
+    {
+      key: 'emi',
+      icon: <UnorderedListOutlined />,
+      label: 'EMI',
+    },
     ...(isAdmin
       ? [
           {
@@ -95,6 +106,11 @@ const NavBar = () => {
                 key: 'admin-orders',
                 icon: <UnorderedListOutlined />,
                 label: 'Manage Orders',
+              },
+              {
+                key: 'admin-emi',
+                icon: <UnorderedListOutlined />,
+                label: 'Manage EMI',
               },
             ],
           },

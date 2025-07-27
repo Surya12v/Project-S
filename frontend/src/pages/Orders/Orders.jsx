@@ -21,19 +21,11 @@ const Orders = () => {
     dispatch(fetchOrders());
   }, [dispatch]);
 
-   const handleCardClick = (e, productId) => {
-    console.log("Clicked product ID:", productId);
-    // You can navigate or fetch data based on this ID
-    navigate(`/product/${productId}`);
-    
+  const handleCardClick = (e, orderId) => {
+    navigate(`/orders/summary/${orderId}`);
   };
+
   const columns = [
-    // {
-    //   title: 'Order ID',
-    //   dataIndex: '_id',
-    //   key: '_id',
-    //   width: 200,
-    // },
     {
       title: 'Items',
       dataIndex: 'items',
@@ -79,35 +71,30 @@ const Orders = () => {
       ),
     },
     {
-                          title: 'Actions',
-                          dataIndex: 'actions',
-                          key: 'actions', 
-                          render: (_, order) => (
-                            <Space>
-                              <Button
-                                size="small"
-                                type="primary"
-                                ghost
-                                onClick={(e) =>
-                                  handleCardClick(
-                                    e,
-                                    order.items?.map((item) => item.productId?._id) || []
-                                  )
-                                }
-                              >
-                                View Details
-                              </Button>
-                              <Button size="small" icon={<TruckOutlined />}>
-                                Track
-                              </Button>
-                              {order.orderStatus === 'DELIVERED' && (
-                                <Button size="small" icon={<StarOutlined />}>
-                                  Review
-                                </Button>
-                              )}
-                            </Space>
-                          )
-                        },
+      title: 'Actions',
+      dataIndex: 'actions',
+      key: 'actions', 
+      render: (_, order) => (
+        <Space>
+          <Button
+            size="small"
+            type="primary"
+            ghost
+            onClick={() => handleCardClick(null, order._id)}
+          >
+            View Details
+          </Button>
+          <Button size="small" icon={<TruckOutlined />}>
+            Track
+          </Button>
+          {order.orderStatus === 'DELIVERED' && (
+            <Button size="small" icon={<StarOutlined />}>
+              Review
+            </Button>
+          )}
+        </Space>
+      )
+    },
   ];
 
   return (

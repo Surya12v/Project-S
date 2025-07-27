@@ -40,6 +40,15 @@ const orderSchema = new mongoose.Schema({
     type: Object,
     required: true
   },
+  emiPlan: {
+    type: Object, // { months, interestRate, monthly, total }
+    default: null
+  },
+  emiOrderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EmiOrder',
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -59,11 +59,19 @@ const EmiModule = ({
 
   // Handle plan selection
   const handlePlanChange = (value) => {
-    const [months, rate] = value.split("-").map(Number);
+    const [months, interestRate] = value.split("-").map(Number);
     setSelectedDuration(months);
-    setSelectedRate(rate);
+    setSelectedRate(interestRate);
+    const planObj = plans.find(
+      (p) => p.months === months && p.interestRate === interestRate
+    );
     if (onSelectEmiPlan) {
-      onSelectEmiPlan({ months, rate, monthly: calculateEMI(price, months, rate) });
+      onSelectEmiPlan({
+        months,
+        interestRate,
+        monthly: calculateEMI(price, months, interestRate),
+        ...planObj
+      });
     }
   };
 

@@ -18,6 +18,7 @@ import { calculateFinalPrice } from '../../utils/priceUtils';
 import EmiModule from '../../components/Emi/emi';
 import NavBar from '../../components/NavBar/NavBar';
 import ProductView from '../ProductView/ProductView';
+import { payEmiInstallment } from '../../store/slices/orderSlice';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -43,6 +44,7 @@ const Account = () => {
   const [activityLog, setActivityLog] = useState([]);
   const [emiPlans, setEmiPlans] = useState([]);
   const [emiModal, setEmiModal] = useState(false);
+  const [payingEmi, setPayingEmi] = useState(false);
   const googleId = user?.googleId || '';
   console.log("Google ID:", googleId);
   // Fetch user, orders, wishlist, cart, addresses, payment methods, notifications, EMI, etc.
@@ -227,6 +229,24 @@ const fetchAddresses = async () => {
     const fields = [user?.displayName, user?.email, user?.phone, user?.gender, user?.dob];
     const completed = fields.filter(field => field).length;
     return Math.round((completed / fields.length) * 100);
+  };
+
+  // Handler for manual EMI payment using redux slice
+  const handlePayEmi = async (emiOrder, installmentNumber) => {
+    setPayingEmi(true);
+    try {
+      await dispatch(payEmiInstallment({
+        orderId: emiOrder._id,
+        installmentNumber,
+        paymentDetails: { method: 'ONLINE' }
+      })).unwrap();
+      message.success('EMI installment paid!');
+      // Optionally refresh EMI plans/orders here
+    } catch (err) {
+      message.error('Failed to pay EMI');
+    } finally {
+      setPayingEmi(false);
+    }
   };
 
   return (
@@ -918,10 +938,27 @@ const fetchAddresses = async () => {
                             marginBottom: '12px'
                           }}
                           actions={[
-                            <Button type="primary" onClick={() => setEmiModal(true)}>
-                              Pay EMI
-                            </Button>,
-                            <Button danger>Cancel</Button>
+                            // Render a button for each installment
+                            ...(plan.installments
+                              ? plan.installments.map((inst, idx) => (
+                                  <Button
+                                    key={idx}
+                                    type="primary"
+                                    loading={payingEmi}
+                                    disabled={inst.paid}
+                                    onClick={() => handlePayEmi(plan, idx + 1)}
+                                  >
+                                    {inst.paid ? 'Paid' : `Pay EMI #${idx + 1}`}
+                                  </Button>
+                                ))
+                              : [
+                                  <Button
+                                    type="primary"
+                                    onClick={() => setEmiModal(true)}
+                                  >
+                                    Pay EMI
+                                  </Button>
+                                ])
                           ]}
                         >
                           <List.Item.Meta

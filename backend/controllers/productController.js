@@ -1,5 +1,7 @@
 const Product = require('../models/Product');
 const logger = require('../utils/logger');
+const notificationController = require('./notificationController');
+const User = require('../models/User');
 
 // Define all functions without exports.
 // ...existing code...
@@ -79,6 +81,19 @@ const getAllProducts = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const product = await Product.create(req.body);
+
+    // Notify all users about the new product
+    const users = await User.find({});
+    for (const user of users) {
+      await notificationController.createNotification(
+        user._id,
+        'PRODUCT',
+        'New Product Added',
+        `Check out our new product: ${product.name}`,
+        `/product/${product._id}`
+      );
+    }
+
     res.status(201).json(product);
   } catch (error) {
     logger.error('Create product error:', error);

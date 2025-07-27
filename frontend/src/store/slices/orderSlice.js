@@ -40,6 +40,33 @@ export const placeOrder = createAsyncThunk(
   }
 );
 
+// Pay EMI installment thunk
+export const payEmiInstallment = createAsyncThunk(
+  'orders/payEmiInstallment',
+  async ({ orderId, userId, installmentNumber, paymentDetails }, { rejectWithValue }) => {
+    console.log("Paying EMI installment for order:", orderId, "installment:", installmentNumber);
+    try {
+      const csrfToken = await getCsrfToken();
+      console.log("api", API_URL);
+      console.log("Payment details:", paymentDetails);
+      const response = await axios.post(
+        `${API_URL}/api/orders/emi/pay`,
+        { orderId, userId, installmentNumber, paymentDetails },
+        {
+          withCredentials: true,
+          headers: {
+            'X-CSRF-Token': csrfToken,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const orderSlice = createSlice({
   name: 'orders',
   initialState: {
@@ -47,7 +74,9 @@ const orderSlice = createSlice({
     loading: false,
     error: null,
     placing: false,
-    placeOrderSuccess: false
+    placeOrderSuccess: false,
+    emiPaymentLoading: false,
+    emiPaymentSuccess: false
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -77,6 +106,21 @@ const orderSlice = createSlice({
       .addCase(placeOrder.rejected, (state, action) => {
         state.placing = false;
         state.placeOrderSuccess = false;
+        state.error = action.payload;
+      })
+      // Pay EMI installment
+      .addCase(payEmiInstallment.pending, (state) => {
+        state.emiPaymentLoading = true;
+        state.emiPaymentSuccess = false;
+        state.error = null;
+      })
+      .addCase(payEmiInstallment.fulfilled, (state) => {
+        state.emiPaymentLoading = false;
+        state.emiPaymentSuccess = true;
+      })
+      .addCase(payEmiInstallment.rejected, (state, action) => {
+        state.emiPaymentLoading = false;
+        state.emiPaymentSuccess = false;
         state.error = action.payload;
       });
   }

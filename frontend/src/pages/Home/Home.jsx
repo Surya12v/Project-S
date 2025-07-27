@@ -1,12 +1,17 @@
 import React from 'react';
 import { Layout, Typography, } from 'antd';
 import NavBar from '../../components/NavBar/NavBar';
+import EmiOrderPayment from '../../components/Emi/EmiOrderPayment';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
 const Home = () => {
   const user = null; // Or fetch user if you want to show profile
+
+  // Dummy EMI order for demonstration; replace with real data/fetch logic as needed
+  const selectedEmiOrder = null; // Or fetch from API/Redux
+  const fetchEmiOrderDetails = () => {}; // No-op or real refresh function
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -29,8 +34,12 @@ const Home = () => {
           <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: '16px' }}>
             Welcome back.
           </Text>
+
         </div>
+        
       </Content>
+      {/* Only render EMI payment if selectedEmiOrder is defined */}
+     
     </Layout>
   );
 };

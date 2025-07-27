@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Form, Input, Button, Steps, Card, Radio, Space,
-  Typography, Divider, message, List, Checkbox, Row, Col, Select, Spin, Modal
+  Typography, Divider, message, List, Checkbox, Row, Col, Select, Spin, Modal,Layout
 } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -13,7 +13,8 @@ import NavBar from '../../components/NavBar/NavBar';
 import { useDispatch, useSelector } from 'react-redux';
 import { placeOrder } from '../../store/slices/orderSlice';
 import EmiModule from '../../components/Emi/emi';
-
+import PaymentOptions from '../../components/Payment/PaymentOptions';
+const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 const { Step } = Steps;
 
@@ -42,6 +43,7 @@ const Checkout = () => {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [selectedEmiPlan, setSelectedEmiPlan] = useState(null);
   const [emiModalVisible, setEmiModalVisible] = useState(false);
+  const [paymentMode, setPaymentMode] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -159,8 +161,15 @@ const Checkout = () => {
     setCurrent(2);
   };
 
-  const handlePaymentSubmit = (values) => {
-    setOrderDetails(prev => ({ ...prev, paymentMode: values.paymentMode }));
+  // Remove handlePaymentSubmit and instead use onReviewOrder
+  const onReviewOrder = (values) => {
+    // If EMI is selected, ensure a plan is chosen
+    if (paymentMode === 'EMI' && !selectedEmiPlan) {
+      message.error('Please select an EMI plan');
+      setEmiModalVisible(true);
+      return;
+    }
+    setOrderDetails(prev => ({ ...prev, paymentMode }));
     setCurrent(3);
   };
 
@@ -267,6 +276,17 @@ const Checkout = () => {
         );
       } catch (err) {
         message.error('Failed to initiate payment');
+      } finally {
+        setPlacingOrder(false);
+      }
+    } else if (orderDetails.paymentMode === 'EMI') {
+      // For EMI, you may want to show a confirmation or redirect to EMI payment gateway if needed
+      try {
+        await dispatch(placeOrder(orderPayload)).unwrap();
+        message.success('Order placed successfully with EMI!');
+        navigate('/orders');
+      } catch (error) {
+        message.error('Order failed');
       } finally {
         setPlacingOrder(false);
       }
@@ -502,86 +522,23 @@ const Checkout = () => {
       title: 'Payment',
       content: (
         <Card>
-          <Form layout="vertical" onFinish={handlePaymentSubmit}>
-            <Form.Item
-              name="paymentMode"
-              label="Select Payment Method"
-              rules={[{ required: true, message: 'Please select a payment method' }]}
-            >
-              <Radio.Group
-                size="large"
-                onChange={e => {
-                  setSelectedEmiPlan(null);
-                  // If EMI selected, open modal and reset paymentMode to undefined
-                  if (e.target.value === 'EMI' && emiEligible) {
-                    setEmiModalVisible(true);
-                    // Optionally reset paymentMode so form doesn't proceed
-                    setOrderDetails(prev => ({ ...prev, paymentMode: undefined }));
-                  }
-                }}
-              >
-                <Space direction="vertical">
-                  {getAvailablePaymentModes().map(mode => (
-                    <Radio value={mode} key={mode}>{mode}</Radio>
-                  ))}
-                </Space>
-              </Radio.Group>
-            </Form.Item>
-            <Divider />
-            <Form.Item label="Promo Code">
-              <Input
-                placeholder="Enter promo code"
-                value={promo}
-                onChange={e => setPromo(e.target.value)}
-                disabled={!!appliedPromo}
-                style={{ width: 200, marginRight: 8 }}
-              />
-              <Button
-                type="primary"
-                loading={applyingPromo}
-                disabled={!!appliedPromo}
-                onClick={handleApplyPromo}
-              >
-                Apply
-              </Button>
-              {appliedPromo && (
-                <Button
-                  style={{ marginLeft: 8 }}
-                  icon={<ReloadOutlined />}
-                  onClick={() => { setAppliedPromo(null); setPromo(''); }}
-                >
-                  Remove
-                </Button>
-              )}
-            </Form.Item>
-            <Button type="primary" htmlType="submit" size="large">
-              Review Order
-            </Button>
-          </Form>
-          {/* EMI Modal */}
-          {emiEligible && (
-            <Modal
-              open={emiModalVisible}
-              onCancel={() => setEmiModalVisible(false)}
-              footer={null}
-              title="Select EMI Plan"
-              destroyOnClose
-            >
-              <EmiModule
-                productId={emiEligible.product._id}
-                price={emiEligible.product.price}
-                plans={emiEligible.emiPlans}
-                onSelectEmiPlan={plan => {
-                  setSelectedEmiPlan(plan);
-                  setEmiModalVisible(false);
-                  // Set paymentMode to EMI after plan selection
-                  setOrderDetails(prev => ({ ...prev, paymentMode: 'EMI' }));
-                }}
-                selectedPlan={selectedEmiPlan}
-                disabled={false}
-              />
-            </Modal>
-          )}
+          <PaymentOptions
+            paymentModes={getAvailablePaymentModes()}
+            paymentMode={paymentMode}
+            setPaymentMode={setPaymentMode}
+            promo={promo}
+            setPromo={setPromo}
+            appliedPromo={appliedPromo}
+            setAppliedPromo={setAppliedPromo}
+            applyingPromo={applyingPromo}
+            handleApplyPromo={handleApplyPromo}
+            selectedEmiPlan={selectedEmiPlan}
+            setSelectedEmiPlan={setSelectedEmiPlan}
+            emiEligible={emiEligible}
+            emiModalVisible={emiModalVisible}
+            setEmiModalVisible={setEmiModalVisible}
+            onReviewOrder={onReviewOrder}
+          />
         </Card>
       )
     },
@@ -698,15 +655,18 @@ const Checkout = () => {
   ];
 
   if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
-
+  
   return (
-    <div style={{ padding: '24px', maxWidth: 900, margin: '0 auto' }}>
-      <NavBar />
+    <Layout style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+     <Header style={{ padding: 0, background: 'transparent' }}>
+        <NavBar />
+      </Header>
       <Steps current={current} style={{ marginBottom: 24 }}>
         {steps.map(item => <Step key={item.title} title={item.title} />)}
       </Steps>
       <Card>{steps[current].content}</Card>
-    </div>
+     
+    </Layout>
   );
 };
 

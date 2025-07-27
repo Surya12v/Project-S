@@ -1,5 +1,8 @@
 const razorpay = require('../config/razorpay');
 const crypto = require('crypto');
+const Payment = require('../models/Payment');
+const notificationController = require('./notificationController'); // Import notification controller
+
 // Create Razorpay order
 exports.createRazorpayOrder = async (req, res) => {
   // CSRF error handling
@@ -32,9 +35,7 @@ exports.createRazorpayOrder = async (req, res) => {
 };
 
 // (Optional) Razorpay webhook endpoint for EMI tracking
-
-
-exports.razorpayWebhook = (req, res) => {
+exports.razorpayWebhook = async (req, res) => {
   const secret = process.env.RAZORPAY_KEY_SECRET;
   const signature = req.headers['x-razorpay-signature'];
   const body = JSON.stringify(req.body);
@@ -52,7 +53,87 @@ exports.razorpayWebhook = (req, res) => {
   if (req.body.event === 'payment.captured') {
     // Update order/payment status in DB
     // Example: await Order.findOneAndUpdate({ razorpayPaymentId: req.body.payload.payment.entity.id }, { paymentStatus: 'PAID' });
-  }
+    // Save payment record for audit/history
+    const paymentEntity = req.body.payload?.payment?.entity;
+    if (paymentEntity) {
+      await Payment.create({
+        userId: paymentEntity.notes?.userId,
+        orderId: paymentEntity.notes?.orderId,
+        paymentType: 'ORDER',
+        amount: paymentEntity.amount / 100,
+        status: 'SUCCESS',
+        method: paymentEntity.method,
+        gateway: 'Razorpay',
+        gatewayOrderId: paymentEntity.order_id,
+        gatewayPaymentId: paymentEntity.id,
+        details: paymentEntity,
+        paidAt: new Date(paymentEntity.created_at * 1000),
+        createdBy: 'system'
+      });
 
+      // Send notification after payment record is created
+      try {
+        await notificationController.createNotification(
+          paymentEntity.notes?.userId,
+          'PAYMENT',
+          'Payment Successful',
+          `Your payment of ₹${paymentEntity.amount / 100} was successful.`,
+          `/orders`
+        );
+      } catch (notifyErr) {
+        console.error('Failed to create payment notification:', notifyErr);
+      }
+    }
+  }
   res.status(200).send('Webhook received');
+};
+
+// Get all payments (admin)
+exports.getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find().sort({ paidAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch payments' });
+  }
+};
+
+// Get payment by ID (admin)
+exports.getPaymentById = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId);
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+    res.json(payment);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch payment' });
+  }
+};
+
+// Get payments by order (user)
+exports.getPaymentsByOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    // Only allow user to fetch their own order's payments
+    const payments = await Payment.find({ orderId, userId: req.user._id }).sort({ paidAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch payments for order' });
+  }
+};
+
+// Get payments by user (user)
+exports.getPaymentsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    // Only allow user to fetch their own payments
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    const payments = await Payment.find({ userId }).sort({ paidAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch payments for user' });
+  }
 };
