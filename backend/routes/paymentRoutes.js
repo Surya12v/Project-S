@@ -13,7 +13,7 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
 // Create Razorpay order with CSRF protection
 router.post('/create-order', csrfProtection, isAuthenticated, paymentController.createRazorpayOrder);
 
-// (Optional) Razorpay webhook endpoint for EMI tracking
+// Razorpay webhook endpoint for EMI tracking
 router.post('/webhook', express.raw({ type: 'application/json' }), paymentController.razorpayWebhook);
 
 // --- Public/Authenticated Payment Routes ---
@@ -23,5 +23,8 @@ router.get('/user/:userId', isAuthenticated, paymentController.getPaymentsByUser
 // --- Admin Payment Routes ---
 router.get('/admin/all', isAdmin, paymentController.getAllPayments);
 router.get('/admin/:paymentId', isAdmin, paymentController.getPaymentById);
+
+// --- EMI Installment Payment (moved from emi/order routes) ---
+router.post('/emi/pay', isAuthenticated, paymentController.payEmiInstallment);
 
 module.exports = router;

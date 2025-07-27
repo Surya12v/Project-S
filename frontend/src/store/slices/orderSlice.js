@@ -50,7 +50,7 @@ export const payEmiInstallment = createAsyncThunk(
       console.log("api", API_URL);
       console.log("Payment details:", paymentDetails);
       const response = await axios.post(
-        `${API_URL}/api/orders/emi/pay`,
+        `${API_URL}/api/payment/emi/pay`,
         { orderId, userId, installmentNumber, paymentDetails },
         {
           withCredentials: true,

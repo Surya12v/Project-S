@@ -102,25 +102,6 @@ exports.createOrder = async (req, res) => {
       `/orders`
     );
 
-    // If ONLINE or EMI, save payment record
-    if (paymentMode === 'ONLINE' || paymentMode === 'EMI') {
-      await Payment.create({
-        userId: req.user._id,
-        orderId: order._id,
-        paymentType: 'ORDER',
-        amount: totalAmount,
-        status: 'SUCCESS',
-        method: paymentMode,
-        gateway: 'Razorpay',
-        gatewayOrderId: razorpayOrderId,
-        gatewayPaymentId: razorpayPaymentId,
-        gatewaySignature: razorpaySignature,
-        details: { ...req.body },
-        paidAt: new Date(),
-        createdBy: 'user'
-      });
-    }
-
     // If EMI, update emiOrder with orderId
     if (emiOrderId) {
       await EmiOrder.findByIdAndUpdate(emiOrderId, { orderId: order._id });
@@ -246,3 +227,6 @@ exports.updateOrderStatus = async (req, res) => {
 
 // Use the EMI controller's payEmiInstallment for EMI payments
 exports.payEmiInstallment = emiController.payEmiInstallment;
+
+
+
