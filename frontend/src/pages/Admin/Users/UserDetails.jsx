@@ -13,7 +13,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchUserById, updateUserStatus, updateUserRole, fetchAdminUsers } from '../../../store/slices/userSlice';
-import Navbar from '../../../components/Navbar/Navbar';
+import Navbar from '../../../components/NavBar/NavBar';
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 const { Option } = Select;

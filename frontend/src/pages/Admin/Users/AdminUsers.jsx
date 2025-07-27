@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAdminUsers, toggleUserStatus } from '../../../store/slices/userSlice';
-import Navbar from '../../../components/Navbar/Navbar';
+import Navbar from '../../../components/NavBar/NavBar';
 const { Title, Text } = Typography;
 
 const AdminUsers = () => {
