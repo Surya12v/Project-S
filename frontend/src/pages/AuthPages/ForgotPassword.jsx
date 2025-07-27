@@ -10,48 +10,29 @@ import {
 } from 'antd';
 import { MailOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import { AUTH_ROUTES } from '../../config/constants';
+import { useDispatch, useSelector } from 'react-redux';
+import { forgotPassword } from '../../store/slices/authSlice';
 
 const { Title, Text, Link } = Typography;
 
 const ForgotPassword = ({ onBack }) => {
-  const [loading, setLoading] = useState(false);
-  const [resetLink, setResetLink] = useState('');
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const { loading, forgotPasswordSuccess, error } = useSelector(state => state.auth);
 
   const handleSubmit = async (values) => {
-    setLoading(true);
     try {
-      const response = await fetch(`${AUTH_ROUTES.GOOGLE.replace('/google', '')}/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values)
+      await dispatch(forgotPassword({ email: values.email })).unwrap();
+      notification.success({
+        message: 'Success',
+        description: 'Password reset link sent to your email.'
       });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        notification.success({
-          message: 'Success',
-          description: 'Reset link generated successfully'
-        });
-        // For development: show the reset link
-        if (data.dev?.resetLink) {
-          setResetLink(data.dev.resetLink);
-        }
-      } else {
-        notification.error({
-          message: 'Error',
-          description: data.message || 'Something went wrong'
-        });
-      }
-    } catch (error) {
+    } catch (err) {
       notification.error({
         message: 'Error',
-        description: 'Failed to connect to server'
+        description: err || 'Something went wrong'
       });
     }
-    setLoading(false);
   };
 
   return (
@@ -84,16 +65,21 @@ const ForgotPassword = ({ onBack }) => {
           Enter your email to receive a password reset link
         </Text>
 
-        {resetLink && (
+        {forgotPasswordSuccess && (
           <Alert
-            message="Development Mode"
-            description={
-              <div>
-                Reset Link (Development Only):<br/>
-                <Link href={resetLink} target="_blank">{resetLink}</Link>
-              </div>
-            }
-            type="info"
+            message="Success"
+            description="If your email exists, a reset link has been sent."
+            type="success"
+            showIcon
+            style={{ marginBottom: 24 }}
+          />
+        )}
+
+        {error && (
+          <Alert
+            message="Error"
+            description={error}
+            type="error"
             showIcon
             style={{ marginBottom: 24 }}
           />
@@ -138,3 +124,4 @@ const ForgotPassword = ({ onBack }) => {
 };
 
 export default ForgotPassword;
+

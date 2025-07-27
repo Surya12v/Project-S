@@ -118,7 +118,6 @@ exports.forgotPassword = async (req, res) => {
         message: 'If an account exists with this email, you will receive reset instructions.' 
       });
     }
-
     const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     
     user.resetPasswordToken = resetToken;

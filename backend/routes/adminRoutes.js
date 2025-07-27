@@ -20,6 +20,9 @@ router.get('/dashboard/stats', async (req, res) => {
       Order.aggregate([{ $group: { _id: null, total: { $sum: "$totalAmount" } } }])
     ]);
     const total = totalAmountAgg[0]?.total || 0;
+    console.log('User count:', userCount);
+    console.log('Admin routes',total);
+    console.log('Dashboard stats fetched successfully');
     res.json({
       userCount,
       orderCount,
@@ -27,7 +30,8 @@ router.get('/dashboard/stats', async (req, res) => {
       recentOrders,
       total
     });
-    console.log('Admin routes',total);
+    
+   
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
   }

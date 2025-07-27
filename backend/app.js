@@ -10,12 +10,24 @@ require('./config/passport');
 const app = express();
 
 // Middleware: CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://33269c5h-5173.inc1.devtunnels.ms'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'X-CSRF-Token']
 }));
+
 
 // Body parsers
 app.use(express.json());
@@ -57,12 +69,15 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api', require('./routes/productRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
-
+app.use('/api/wishlist', require('./routes/wishlistRoutes'));
+app.use('/api/emi', require('./routes/emiRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 // ❌ Exclude CSRF on Razorpay webhook
 app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   // Don't apply csrf middleware here

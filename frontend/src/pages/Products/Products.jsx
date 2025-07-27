@@ -21,8 +21,9 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProducts } from '../../store/slices/productSlice';
-import axios from 'axios';
-
+import { fetchWishlist, addToWishlist, removeFromWishlist } from '../../store/slices/wishlistSlice';
+import { addToCart } from '../../store/slices/cartSlice';
+import NavBar from '../../components/NavBar/NavBar';
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
 const { Meta } = Card;
@@ -33,10 +34,10 @@ const Products = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { items: products, loading, error } = useSelector(state => state.products);
+  const { items: wishlist = [] } = useSelector(state => state.wishlist) || {};
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [wishlist, setWishlist] = useState([]);
   const [compareList, setCompareList] = useState([]);
   const [filters, setFilters] = useState({
     category: 'all',
@@ -52,39 +53,36 @@ const Products = () => {
       once: true,
     });
     dispatch(fetchProducts());
+    dispatch(fetchWishlist());
     // eslint-disable-next-line
   }, [dispatch]);
 
   // Add to cart function
-  const addToCart = async (productId, quantity) => {
+  const addToCartHandler = async (productId, quantity) => {
     try {
-      await axios.post(
-        `${API_URL}/api/cart/add`,
-        { productId, quantity },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true // Ensure cookies/session are sent
-        }
-      );
+      console.log('Adding to cart:', productId, quantity);
+      await dispatch(addToCart({ productId, quantity })).unwrap();
+      console.log('Product added to cart successfully');
       message.success('Added to cart successfully');
       setDrawerVisible(false);
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        message.error('Please login to add items to cart');
-      } else {
-        message.error('Failed to add to cart');
-      }
+      message.error('Failed to add to cart');
     }
   };
 
-  // Add to wishlist
-  const toggleWishlist = (productId) => {
-    setWishlist(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
-    message.success(wishlist.includes(productId) ? 'Removed from wishlist' : 'Added to wishlist');
+  // Add/remove from wishlist using redux slice
+  const toggleWishlist = async (productId) => {
+    try {
+      if (wishlist.some(item => item._id === productId)) {
+        await dispatch(removeFromWishlist(productId)).unwrap();
+        message.success('Removed from wishlist');
+      } else {
+        await dispatch(addToWishlist(productId)).unwrap();
+        message.success('Added to wishlist');
+      }
+    } catch (error) {
+      message.error('Failed to update wishlist');
+    }
   };
 
   // Add to compare
@@ -162,7 +160,7 @@ const Products = () => {
   const ProductCard = ({ product }) => {
     const deliveryInfo = getDeliveryInfo();
     const discount = product.originalPrice ? getDiscountPercentage(product.originalPrice, product.price) : 0;
-    const isWishlisted = wishlist.includes(product._id);
+    const isWishlisted = wishlist.some(item => item._id === product._id);
     const isInCompare = compareList.includes(product._id);
 
     return (
@@ -218,7 +216,7 @@ const Products = () => {
                   <Button
                     type="text"
                     icon={<HeartOutlined />}
-                    style={{ 
+                    style={{
                       backgroundColor: 'rgba(255,255,255,0.9)',
                       color: isWishlisted ? '#ff4d4f' : '#666'
                     }}
@@ -362,9 +360,9 @@ const Products = () => {
                 type="primary"
                 icon={<ShoppingCartOutlined />}
                 onClick={(e) => {
-                  e.preventDefault(); // Add this
-                  e.stopPropagation(); // Keep this
-                  addToCart(product._id, 1);
+                  e.preventDefault();
+                  e.stopPropagation();
+                  addToCartHandler(product._id, 1);
                 }}
                 block
                 disabled={product.stockQuantity === 0}
@@ -375,8 +373,8 @@ const Products = () => {
                 type="default"
                 icon={<ThunderboltOutlined />}
                 onClick={(e) => {
-                  e.preventDefault(); // Add this
-                  e.stopPropagation(); // Keep this
+                  e.preventDefault();
+                  e.stopPropagation();
                   handleBuyNow(product);
                 }}
                 block
@@ -393,12 +391,14 @@ const Products = () => {
   };
 
   return (
+    
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}
     >
+      <NavBar />
       <Space direction="vertical" style={{ width: '100%' }} size="large">
         {/* Header and Filters */}
         <div style={{ 
@@ -409,9 +409,9 @@ const Products = () => {
         }}>
           <Row gutter={[16, 16]} justify="space-between" align="middle">
             <Col>
-              <Title level={2} style={{ margin: 0 }}>
+              {/* <Title level={2} style={{ margin: 0 }}>
                 Products ({products.length})
-              </Title>
+              </Title> */}
             </Col>
             <Col>
               <Space>
@@ -422,14 +422,6 @@ const Products = () => {
                     </Button>
                   </Badge>
                 )}
-                <Button 
-                  type="primary"
-                  icon={<ShoppingCartOutlined />}
-                  onClick={goToCart}
-                  size="large"
-                >
-                  View Cart
-                </Button>
               </Space>
             </Col>
           </Row>

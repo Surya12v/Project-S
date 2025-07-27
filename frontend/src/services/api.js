@@ -1,41 +1,59 @@
-import axios from 'axios';
-const API_URL = import.meta.env.VITE_API_URL;
+const User = require('../models/User');
+const Order = require('../models/Order');
 
-export const productService = {
-  getAllProducts: async () => {
-    const { data } = await axios.get(`${API_URL}/api/products`);
-    return data;
-  },
+// GET all users
+exports.getAllUsers = async (req, res) => {
+  const users = await User.find().sort({ createdAt: -1 });
+  res.json(users);
+};
+exports.createUser = async (req, res) => {
+  try {
+    const newUser = await User.create(req.body);
+    res.status(201).json(newUser);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+// UPDATE user
+exports.updateUser = async (req, res) => {
+  try {
+    console.log('Updating user:', req.params.id, req.body);
+    
+    // Optional: Filter allowed fields here
+    const updated = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
-  getProduct: async (id) => {
-    const { data } = await axios.get(`${API_URL}/api/products/${id}`);
-    return data;
-  },
+    if (!updated) return res.status(404).json({ error: 'User not found' });
 
-  createProduct: async (product) => {
-    const { data } = await axios.post(`${API_URL}/api/admin/products`, product, {
-      headers: { 'Content-Type': 'application/json' },
-      withCredentials: true
-    });
-    return data;
-  },
-
-  updateProduct: async (id, product) => {
-    const { data } = await axios.put(`${API_URL}/api/admin/products/${id}`, product, {
-      headers: { 'Content-Type': 'application/json' },
-      withCredentials: true
-    });
-    return data;
-  },
-
-  deleteProduct: async (id) => {
-    const { data } = await axios.delete(`${API_URL}/api/admin/products/${id}`, {
-      withCredentials: true
-    });
-    return data;
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 
-export const orderService = {
-  // Similar methods for orders
+
+// DELETE user
+exports.deleteUser = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
+
+// GET user by ID
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    console.log('Fetching user by ID:', req.params.id);
+    console.log('API URL:', `${req.protocol}://${req.get('host')}/api/admin/users/${req.params.id}`);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Remove all backend controller code and use only client-side API helpers here if needed.
+// For EMI payment, use the redux slice/thunk approach instead of a separate function here.
+// If you need to call EMI payment, create a thunk in the appropriate slice (e.g., orderSlice or a new emiSlice).

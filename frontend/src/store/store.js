@@ -6,11 +6,15 @@ import cartReducer from './slices/cartSlice';
 import productReducer from './slices/productSlice';
 import orderReducer from './slices/orderSlice';
 import userReducer from './slices/userSlice';
+import adminProductReducer from './slices/adminProductSlice';
+import wishlistReducer from './slices/wishlistSlice'; 
+import adminOrderReducer from './slices/adminOrderSlice';
+import paymentsReducer from './slices/paymentSlice';
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'cart'] // Only persist auth and cart state
+  whitelist: ['auth', 'cart'] 
 };
 
 export const store = configureStore({
@@ -19,7 +23,11 @@ export const store = configureStore({
     cart: persistReducer(persistConfig, cartReducer),
     products: productReducer,
     orders: orderReducer,
-    users: userReducer
+    users: userReducer,
+    wishlist: wishlistReducer,
+    adminProducts: adminProductReducer,
+    adminOrders: adminOrderReducer,
+    payments: paymentsReducer,  
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

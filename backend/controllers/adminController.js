@@ -7,6 +7,7 @@ const Wishlist = require('../models/Wishlist');
 // Get all users with activity counts
 exports.getAllUsers = async (req, res) => {
   try {
+    console.log('Fetching all users with activity counts');
     const users = await User.aggregate([
       {
         $lookup: {
@@ -59,6 +60,8 @@ exports.getAllUsers = async (req, res) => {
 // Get detailed user information
 exports.getUserDetails = async (req, res) => {
   try {
+    console.log(`Fetching details for user ID: ${req.params.id}`);
+    console.log('API URL:', `${req.protocol}://${req.get('host')}/api/admin/users/${req.params.id}`);
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -73,7 +76,7 @@ exports.getUserDetails = async (req, res) => {
 
     // Calculate stats
     const totalSpent = orders?.reduce((sum, order) => sum + order.totalAmount, 0) || 0;
-
+    
     res.json({
       user,
       activity: {
@@ -88,6 +91,7 @@ exports.getUserDetails = async (req, res) => {
         }
       }
     });
+    
   } catch (error) {
     console.error('Error fetching user details:', error);
     res.status(500).json({ message: 'Internal server error' });

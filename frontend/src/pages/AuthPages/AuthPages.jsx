@@ -47,130 +47,20 @@ import {
 import { motion } from 'framer-motion';
 import { AUTH_ROUTES } from '../../config/constants';
 import axios from 'axios';
-
+import { getCsrfToken } from '../../utils/csrf';
+import { useDispatch, useSelector } from 'react-redux';
+import { checkAuth, loginThunk, signupThunk } from '../../store/slices/authSlice';
+import ForgotPassword from './ForgotPassword';
 const { Title, Text, Paragraph } = Typography;
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-const ForgotPassword = ({ onBack }) => {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
-
-  const showNotification = (type, message, description) => {
-    notification[type]({
-      message,
-      description,
-      placement: 'topRight',
-    });
-  };
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${AUTH_ROUTES.GOOGLE.replace('/google', '')}/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        showNotification('success', 'Success!', 'Password reset link sent to your email.');
-        onBack();
-      } else {
-        showNotification('error', 'Error', data.message || 'Something went wrong');
-      }
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      showNotification('error', 'Error', 'Failed to connect to server');
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card
-        style={{
-          width: '100%',
-          maxWidth: 450,
-          margin: '0 auto',
-          padding: '32px 24px',
-          borderRadius: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
-        }}
-      >
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={onBack}
-          style={{ marginBottom: 24 }}
-          type="link"
-        >
-          Back to Login
-        </Button>
-
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Avatar 
-            size={80} 
-            icon={<UserOutlined />} 
-            style={{ 
-              backgroundColor: '#faad14',
-              boxShadow: '0 4px 12px rgba(250,173,20,0.3)'
-            }} 
-          />
-          <Title level={2} style={{ marginTop: 16, marginBottom: 8 }}>Forgot Password</Title>
-          <Paragraph type="secondary">Enter your email to reset your password</Paragraph>
-        </div>
-
-        <Form
-          form={form}
-          onFinish={handleSubmit}
-          layout="vertical"
-          requiredMark={false}
-        >
-          <Form.Item
-            name="email"
-            rules={[
-              { required: true, message: 'Please input your email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
-            ]}
-          >
-            <Input
-              size="large"
-              prefix={<MailOutlined className="text-primary" />}
-              placeholder="Email"
-              style={{ borderRadius: 8, height: 46 }}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              size="large"
-              loading={loading}
-              style={{ height: 46, borderRadius: 8 }}
-            >
-              Send Reset Link
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
-    </motion.div>
-  );
-};
 
 const AuthPages = () => {
   const [currentPage, setCurrentPage] = useState('login');
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const authState = useSelector(state => state.auth);
+  const { loading: authLoading, user, isAuthenticated, error } = authState;
 
   const showNotification = (type, message, description) => {
     notification[type]({
@@ -181,75 +71,24 @@ const AuthPages = () => {
   };
 
   const handleGoogleAuth = async () => {
-    setLoading(true);
-    try {
-      window.location.href = AUTH_ROUTES.GOOGLE;
-    } catch (error) {
-      setLoading(false);
-    }
+    // No API call, just redirect
+    window.location.href = AUTH_ROUTES.GOOGLE;
   };
-  
-const getCsrfToken = async () => {
-  console.log('Fetching CSRF token...2');
-  const res = await axios.get('http://localhost:5000/api/csrf-token', {
-    withCredentials: true
-  });
- 
-  console.log('CSRF Token Response:', res);
-  return res.data.csrfToken;
-};
 
   const handleSubmit = async (values) => {
-    console.log('Form Values:', values);
-  // setLoading(true);
-  try {
-    let endpoint;
-    let payload = {
-      email: values.email,
-      password: values.password,
-      remember: values.remember
-    };
-    console.log('Payload:', payload);
-    console.log('Current Page:', currentPage);
-
-    if (currentPage === 'signup') {
-      endpoint = `${AUTH_ROUTES.GOOGLE.replace('/google', '')}/register`;
-      payload.firstName = values.firstName;
-      payload.lastName = values.lastName;
-      console.log('Signup Payload:', payload);
-    } else {
-      endpoint = `${AUTH_ROUTES.GOOGLE.replace('/google', '')}/login`;
-      console.log('endpoint:', endpoint);
-      console.log('Login Payload:', payload);
-    }
-    console.log('Endpoint:', endpoint);
-
-    // 👉 Fetch CSRF token before making the POST request
-    console.log('Fetching CSRF token...');
-    const csrfToken = await getCsrfToken();
-    console.log('CSRF Token:', csrfToken);
-    const response = await axios.post(endpoint, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken   // 👈 Attach CSRF token
-      },
-      withCredentials: true
-    });
-    console.log('Response:', response);
-
-    const data = response.data;
-    if (response.status === 200 && data.user) {
+    try {
+      if (currentPage === 'signup') {
+        await dispatch(signupThunk(values)).unwrap();
+      } else {
+        await dispatch(loginThunk(values)).unwrap();
+      }
+      await dispatch(checkAuth()).unwrap();
       showNotification('success', 'Success!', 'You have successfully logged in.');
       window.location.href = '/home';
-    } else {
-      showNotification('error', 'Error', data.message || 'Something went wrong');
+    } catch (error) {
+      showNotification('error', 'Error', error.message || 'Something went wrong');
     }
-  } catch (error) {
-    showNotification('error', 'Error', 'Failed to connect to server');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const LoginPage = () => (
     <motion.div

@@ -11,33 +11,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/constants';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchAdminUsers } from '../../../store/slices/userSlice';
-import axios from 'axios';
-
+import { fetchAdminUsers, toggleUserStatus } from '../../../store/slices/userSlice';
+import Navbar from '../../../components/Navbar/Navbar';
 const { Title, Text } = Typography;
-
-const adminMenuItems = [
-  {
-    key: '/admin/dashboard',
-    icon: <CrownOutlined />,
-    label: 'Dashboard'
-  },
-  {
-    key: '/admin/users',
-    icon: <UserOutlined />,
-    label: 'Users'
-  },
-  {
-    key: '/admin/products',
-    icon: <ShoppingOutlined />,
-    label: 'Products'
-  },
-  {
-    key: '/admin/orders',
-    icon: <ShoppingCartOutlined />,
-    label: 'Orders'
-  }
-];
 
 const AdminUsers = () => {
   const dispatch = useDispatch();
@@ -47,6 +23,18 @@ const AdminUsers = () => {
   useEffect(() => {
     dispatch(fetchAdminUsers());
   }, [dispatch]);
+
+  // Use slice for status toggle
+  const handleToggleStatus = (userId) => {
+    dispatch(toggleUserStatus(userId))
+      .unwrap()
+      .then(() => {
+        message.success('User status updated');
+      })
+      .catch(() => {
+        message.error('Failed to update user status');
+      });
+  };
 
   const columns = [
     {
@@ -127,6 +115,7 @@ const AdminUsers = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <Navbar />
       <Card>
         {/* Admin Menu */}
         {/* Uncomment the Menu below if you want the admin navigation */}

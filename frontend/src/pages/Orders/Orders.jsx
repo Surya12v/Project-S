@@ -1,13 +1,19 @@
 import React, { useEffect } from 'react';
-import { Table, Tag, Typography, Space, Card, message } from 'antd';
+import { Table, Tag, Typography, Space, Card, message, Button } from 'antd';
+import {
+  UserOutlined, LockOutlined, SettingOutlined, MailOutlined, PhoneOutlined, EditOutlined, UploadOutlined, DeleteOutlined, CreditCardOutlined, HomeOutlined, HeartOutlined, BellOutlined, HistoryOutlined, LogoutOutlined, ExclamationCircleOutlined, ShoppingCartOutlined, CheckCircleOutlined, ClockCircleOutlined, TruckOutlined, StarOutlined, GiftOutlined, QuestionCircleOutlined, SafetyOutlined, WalletOutlined
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../config/constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchOrders } from '../../store/slices/orderSlice';
 import axios from 'axios';
+import NavBar from '../../components/NavBar/NavBar';
 
 const { Title } = Typography;
 
 const Orders = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { items: orders, loading, error } = useSelector(state => state.orders);
 
@@ -15,13 +21,11 @@ const Orders = () => {
     dispatch(fetchOrders());
   }, [dispatch]);
 
+  const handleCardClick = (e, orderId) => {
+    navigate(`/orders/summary/${orderId}`);
+  };
+
   const columns = [
-    // {
-    //   title: 'Order ID',
-    //   dataIndex: '_id',
-    //   key: '_id',
-    //   width: 200,
-    // },
     {
       title: 'Items',
       dataIndex: 'items',
@@ -66,10 +70,36 @@ const Orders = () => {
         </Tag>
       ),
     },
+    {
+      title: 'Actions',
+      dataIndex: 'actions',
+      key: 'actions', 
+      render: (_, order) => (
+        <Space>
+          <Button
+            size="small"
+            type="primary"
+            ghost
+            onClick={() => handleCardClick(null, order._id)}
+          >
+            View Details
+          </Button>
+          <Button size="small" icon={<TruckOutlined />}>
+            Track
+          </Button>
+          {order.orderStatus === 'DELIVERED' && (
+            <Button size="small" icon={<StarOutlined />}>
+              Review
+            </Button>
+          )}
+        </Space>
+      )
+    },
   ];
 
   return (
     <div style={{ padding: '24px' }}>
+      <NavBar />
       <Space direction="vertical" style={{ width: '100%' }}>
         <Title level={2}>My Orders</Title>
         {error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
@@ -89,19 +119,5 @@ const Orders = () => {
     </div>
   );
 };
-
-// export default Orders;
-//             loading={loading}
-//             rowKey="_id"
-//             pagination={{
-//               pageSize: 10,
-//               showTotal: (total) => `Total ${total} orders`
-//             }}
-//           />
-//         </Card>
-//       </Space>
-//     </div>
-//   );
-// };
 
 export default Orders;

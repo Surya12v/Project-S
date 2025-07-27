@@ -1,11 +1,6 @@
 import axios from 'axios';
 import { API_URL } from '../config/constants';
-
-// Helper to get CSRF token from backend
-export const getCsrfToken = async () => {
-  const res = await axios.get(`${API_URL}/api/payment/csrf-token`, { withCredentials: true });
-  return res.data.csrfToken;
-};
+import { getCsrfToken } from '../utils/csrf';
 
 export const createRazorpayOrder = async (amount, notes = {}) => {
   const amountInPaise = Math.round(Number(amount) * 100);
