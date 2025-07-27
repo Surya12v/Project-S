@@ -73,6 +73,7 @@ exports.razorpayWebhook = async (req, res) => {
 
       // Send notification after payment record is created
       try {
+        console.log('Creating payment notification for user:', paymentEntity.notes?.userId);
         await notificationController.createNotification(
           paymentEntity.notes?.userId,
           'PAYMENT',
@@ -135,5 +136,84 @@ exports.getPaymentsByUser = async (req, res) => {
     res.json(payments);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch payments for user' });
+  }
+};
+
+// Pay EMI installment (moved from emiController)
+exports.payEmiInstallment = async (req, res) => {
+  try {
+    const { orderId, installmentNumber, paymentDetails } = req.body;
+    if (!orderId || !installmentNumber) {
+      return res.status(400).json({ error: 'Missing EMI order ID or installment number' });
+    }
+    const EmiOrder = require('../models/EmiOrder');
+    const EmiPayment = require('../models/EmiPayment');
+    const CrudHistory = require('../models/CrudHistory');
+    const emiOrder = await EmiOrder.findOne({ _id: orderId, userId: req.user._id });
+    if (!emiOrder) {
+      return res.status(404).json({ error: 'EMI order not found' });
+    }
+    const idx = Number(installmentNumber) - 1;
+    if (!emiOrder.schedule[idx]) {
+      return res.status(400).json({ error: 'Invalid installment' });
+    }
+    if (emiOrder.schedule[idx].status === 'PAID') {
+      return res.status(400).json({ error: 'Installment already paid' });
+    }
+    emiOrder.schedule[idx].status = 'PAID';
+    emiOrder.schedule[idx].paidAt = new Date();
+    if (emiOrder.schedule.every(s => s.status === 'PAID')) {
+      emiOrder.status = 'COMPLETED';
+    }
+    await emiOrder.save();
+    try {
+      await EmiPayment.create({
+        orderId,
+        userId: req.user._id,
+        scheduleIndex: idx,
+        amount: emiOrder.schedule[idx].amount,
+        paidAt: emiOrder.schedule[idx].paidAt,
+        paymentDetails,
+        status: 'SUCCESS',
+        createdBy: 'user'
+      });
+    } catch {}
+    try {
+      await Payment.create({
+        userId: req.user._id,
+        orderId,
+        paymentType: 'EMI',
+        amount: emiOrder.schedule[idx].amount,
+        status: 'SUCCESS',
+        method: paymentDetails?.method || 'ONLINE',
+        gateway: paymentDetails?.gateway || 'Razorpay',
+        gatewayOrderId: paymentDetails?.razorpayOrderId,
+        gatewayPaymentId: paymentDetails?.razorpayPaymentId,
+        gatewaySignature: paymentDetails?.razorpaySignature,
+        scheduleIndex: idx,
+        details: paymentDetails,
+        paidAt: emiOrder.schedule[idx].paidAt,
+        createdBy: 'user'
+      });
+    } catch {}
+    try {
+      await CrudHistory.create({
+        userId: req.user._id,
+        action: 'PAYMENT',
+        entity: 'EmiOrder',
+        entityId: orderId,
+        details: {
+          orderId,
+          scheduleIndex: idx,
+          amount: emiOrder.schedule[idx].amount,
+          paymentDetails
+        },
+        createdBy: 'user'
+      });
+    } catch {}
+    const updatedEmiOrder = await EmiOrder.findById(orderId).populate('productId orderId');
+    res.json({ success: true, emiOrder: updatedEmiOrder });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to pay EMI installment', details: err.message });
   }
 };
