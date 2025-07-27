@@ -12,7 +12,8 @@ const app = express();
 // Middleware: CORS
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://33269c5h-5173.inc1.devtunnels.ms'
+  'https://33269c5h-5173.inc1.devtunnels.ms',
+  'https://project-s-l166.vercel.app/',
 ];
 
 app.use(cors({
