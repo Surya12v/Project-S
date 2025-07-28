@@ -14,6 +14,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'https://33269c5h-5173.inc1.devtunnels.ms',
   'https://project-s-l166.vercel.app',
+  'https://project-s-l166-44ir7yid5-suryas-projects-e5ae86f1.vercel.app',
 ];
 
 app.use(cors({
@@ -43,9 +44,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    httpOnly: false,
+    httpOnly: true,
     sameSite: 'none', // or 'none' if frontend is hosted on a different origin
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
   },
 
 }));
