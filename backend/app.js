@@ -8,7 +8,7 @@ require('dotenv').config();
 require('./config/passport');
 
 const app = express();
-
+app.set('trust proxy', 1);
 // Middleware: CORS
 const allowedOrigins = [
   'http://localhost:5173',
@@ -31,6 +31,7 @@ app.use(cors({
 }));
 
 
+
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -45,8 +46,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
   httpOnly: true,
-  sameSite: 'none',
-  secure: process.env.NODE_ENV === 'production',
+   sameSite: "none",
+  secure: true,
 }
 }));
 
