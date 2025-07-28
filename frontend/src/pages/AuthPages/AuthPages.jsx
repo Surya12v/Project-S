@@ -84,10 +84,11 @@ const handleSubmit = async (values) => {
       await dispatch(loginThunk(values)).unwrap();
     }
 
-    // 🔁 Fetch fresh CSRF token after login
-    await getCsrfToken(); // your utility function – make sure it sets the token globally again
+    // ⚠️ Session cookie updated here — now refetch token
+    const newCsrfToken = await getCsrfToken();
 
-    await dispatch(checkAuth()).unwrap();
+    // ✅ Pass the token to checkAuth
+    await dispatch(checkAuth(newCsrfToken)).unwrap();
 
     showNotification('success', 'Success!', 'You have successfully logged in.');
     window.location.href = '/home';
@@ -95,6 +96,7 @@ const handleSubmit = async (values) => {
     showNotification('error', 'Error', error.message || 'Something went wrong');
   }
 };
+
 
 
   const LoginPage = () => (

@@ -6,13 +6,13 @@ import { getCsrfToken } from '../../utils/csrf';
 // Check authentication/session
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
-  async (_, { rejectWithValue }) => {
+  async (csrfToken, { rejectWithValue }) => {
     try {
-      const csrfToken = await getCsrfToken();
       const response = await axios.get(`${API_URL}/auth/check-session`, {
         withCredentials: true,
         headers: { 'X-CSRF-Token': csrfToken }
       });
+
       const data = response.data;
       if (!data.authenticated) throw new Error('Not authenticated');
       return data.user;
@@ -21,6 +21,7 @@ export const checkAuth = createAsyncThunk(
     }
   }
 );
+
 
 // Logout
 export const logout = createAsyncThunk(
