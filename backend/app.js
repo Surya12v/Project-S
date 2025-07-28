@@ -8,7 +8,7 @@ require('dotenv').config();
 require('./config/passport');
 
 const app = express();
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 // Middleware: CORS
 const allowedOrigins = [
   'http://localhost:5173',
@@ -56,7 +56,13 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // ✅ Apply CSRF Protection (after session + cookieParser)
-app.use(csurf({ cookie: true }));
+app.use(csurf({
+  cookie: {
+    httpOnly: true,
+    sameSite: 'none',
+    secure: true
+  }
+}));
 
 // ✅ Provide CSRF token to frontend
 app.get('/api/csrf-token', (req, res) => {
