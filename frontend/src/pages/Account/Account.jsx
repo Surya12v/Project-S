@@ -49,6 +49,7 @@ const Account = () => {
   console.log("Google ID:", googleId);
   // Fetch user, orders, wishlist, cart, addresses, payment methods, notifications, EMI, etc.
   useEffect(() => {
+    console.log("testing 3 account");
     dispatch(checkAuth());
     dispatch(fetchOrders());
     dispatch(fetchWishlist());

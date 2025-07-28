@@ -44,11 +44,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    httpOnly: true,
-    sameSite: 'none', // or 'none' if frontend is hosted on a different origin
-    secure: true,
-  },
-
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: process.env.NODE_ENV === 'production',
+}
 }));
 
 // Passport middleware

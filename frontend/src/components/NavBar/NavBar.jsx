@@ -23,6 +23,7 @@ const NavBar = () => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log("tetinhg1 navabr");
     dispatch(checkAuth());
   }, [dispatch]);
 

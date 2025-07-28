@@ -10,6 +10,7 @@ export const UserProvider = ({ children }) => {
 
   // Fetch user from slice (calls backend if needed)
   const fetchUser = async () => {
+    console.log("testing 2 usercontext");
     await dispatch(checkAuth());
   };
 

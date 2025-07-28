@@ -2,22 +2,30 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { API_URL } from '../../config/constants';
 import axios from 'axios';
 import { getCsrfToken } from '../../utils/csrf';
+import  axiosInstance from '../../utils/axiosInstance';
 
 // Check authentication/session
 export const checkAuth = createAsyncThunk(
-  'auth/checkAuth',
-  async (csrfToken, { rejectWithValue }) => {
+  "auth/checkAuth",
+  async (_, thunkAPI) => {
     try {
-      const response = await axios.get(`${API_URL}/auth/check-session`, {
-        withCredentials: true,
-        headers: { 'X-CSRF-Token': csrfToken }
-      });
+      const csrfToken = await getCsrfToken(); // ⬅️ important
+      axios.defaults.headers.common['X-CSRF-Token'] = csrfToken;
 
-      const data = response.data;
-      if (!data.authenticated) throw new Error('Not authenticated');
+      const { data } = await axiosInstance.get("/auth/check-session", {
+        headers: {
+        'Content-Type': 'application/json',
+        // Optional: If you're manually passing a CSRF token
+        // 'X-CSRF-Token': csrfToken,
+      },
+        withCredentials: true, // ⬅️ critical for cookies
+      });
+      console.log("Auth check response:", data.authenticated);
+
+      if (!data.authenticated) throw new Error("Not authenticated");
       return data.user;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
@@ -43,7 +51,7 @@ export const logout = createAsyncThunk(
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async ({ email, password, remember }, { rejectWithValue }) => {
-    
+    console.log("Logging in with email:", email);
     try {
       const csrfToken = await getCsrfToken();
       const response = await axios.post(

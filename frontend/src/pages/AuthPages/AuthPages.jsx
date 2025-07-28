@@ -84,11 +84,7 @@ const handleSubmit = async (values) => {
       await dispatch(loginThunk(values)).unwrap();
     }
 
-    // ⚠️ Session cookie updated here — now refetch token
-    const newCsrfToken = await getCsrfToken();
-
-    // ✅ Pass the token to checkAuth
-    await dispatch(checkAuth(newCsrfToken)).unwrap();
+    await dispatch(checkAuth()).unwrap();
 
     showNotification('success', 'Success!', 'You have successfully logged in.');
     window.location.href = '/home';
