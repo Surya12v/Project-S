@@ -43,10 +43,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-  httpOnly: true,
-  sameSite: 'non', // or 'none' if frontend is hosted on a different origin
-  secure: process.env.NODE_ENV === 'production',
-}
+    httpOnly: false,
+    sameSite: 'none', // or 'none' if frontend is hosted on a different origin
+    secure: process.env.NODE_ENV === 'production',
+  },
 
 }));
 
