@@ -54,6 +54,7 @@ import ForgotPassword from './ForgotPassword';
 const { Title, Text, Paragraph } = Typography;
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+
 const AuthPages = () => {
   const [currentPage, setCurrentPage] = useState('login');
   const [loading, setLoading] = useState(false);
@@ -75,20 +76,26 @@ const AuthPages = () => {
     window.location.href = AUTH_ROUTES.GOOGLE;
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      if (currentPage === 'signup') {
-        await dispatch(signupThunk(values)).unwrap();
-      } else {
-        await dispatch(loginThunk(values)).unwrap();
-      }
-      await dispatch(checkAuth()).unwrap();
-      showNotification('success', 'Success!', 'You have successfully logged in.');
-      window.location.href = '/home';
-    } catch (error) {
-      showNotification('error', 'Error', error.message || 'Something went wrong');
+const handleSubmit = async (values) => {
+  try {
+    if (currentPage === 'signup') {
+      await dispatch(signupThunk(values)).unwrap();
+    } else {
+      await dispatch(loginThunk(values)).unwrap();
     }
-  };
+
+    // 🔁 Fetch fresh CSRF token after login
+    await getCsrfToken(); // your utility function – make sure it sets the token globally again
+
+    await dispatch(checkAuth()).unwrap();
+
+    showNotification('success', 'Success!', 'You have successfully logged in.');
+    window.location.href = '/home';
+  } catch (error) {
+    showNotification('error', 'Error', error.message || 'Something went wrong');
+  }
+};
+
 
   const LoginPage = () => (
     <motion.div

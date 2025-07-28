@@ -42,6 +42,7 @@ export const logout = createAsyncThunk(
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async ({ email, password, remember }, { rejectWithValue }) => {
+    
     try {
       const csrfToken = await getCsrfToken();
       const response = await axios.post(
@@ -52,6 +53,7 @@ export const loginThunk = createAsyncThunk(
           headers: { 'X-CSRF-Token': csrfToken }
         }
       );
+    
       return response.data.user;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
