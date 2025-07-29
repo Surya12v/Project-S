@@ -46,8 +46,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
   httpOnly: true,
-  sameSite: import.meta.env.NODE_ENV=="production"?"none":"lax",
-  secure: import.meta.env.NODE_ENV=="production",
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 }
 }));
 
@@ -59,8 +59,8 @@ app.use(passport.session());
 app.use(csurf({
   cookie: {
     httpOnly: true,
-    sameSite: import.meta.env.NODE_ENV=="production"?"none":"lax",
-    secure: import.meta.env.NODE_ENV=="production",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   }
 }));
 
