@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../../config/constants';
+import { API_URL,VITE_URL } from '../../config/constants';
 import {updateUser,fetchUserByIdAccount} from '../../store/slices/userSlice';
 import { fetchOrders } from '../../store/slices/orderSlice';
 import { fetchWishlist, addToWishlist, removeFromWishlist } from '../../store/slices/wishlistSlice';
@@ -186,7 +186,7 @@ const fetchAddresses = async () => {
   // Logout handler
   const handleLogout = async () => {
     await dispatch(logout());
-    window.location.href = '/';
+    navigate(`${VITE_URL}`);
   };
 
   // Delete account handler

@@ -1,4 +1,5 @@
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const VITE_URL= import.meta.env.VITE_URL || 'http://localhost:5173';
 export const AUTH_ROUTES = {
   GOOGLE: `${API_URL}/auth/google`,
   CALLBACK: import.meta.env.VITE_AUTH_CALLBACK_URL,

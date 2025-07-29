@@ -45,7 +45,7 @@ import {
   TwitterOutlined
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import { AUTH_ROUTES } from '../../config/constants';
+import { AUTH_ROUTES,VITE_URL } from '../../config/constants';
 import axios from 'axios';
 import { getCsrfToken } from '../../utils/csrf';
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,6 +53,7 @@ import { checkAuth, loginThunk, signupThunk } from '../../store/slices/authSlice
 import ForgotPassword from './ForgotPassword';
 const { Title, Text, Paragraph } = Typography;
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
 
 const AuthPages = () => {
@@ -87,7 +88,7 @@ const handleSubmit = async (values) => {
     await dispatch(checkAuth()).unwrap();
 
     showNotification('success', 'Success!', 'You have successfully logged in.');
-    window.location.href = '/home';
+    navigate(`${VITE_URL}/home`);
   } catch (error) {
     showNotification('error', 'Error', error.message || 'Something went wrong');
   }
