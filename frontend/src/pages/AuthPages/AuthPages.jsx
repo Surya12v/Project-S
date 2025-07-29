@@ -88,7 +88,7 @@ const handleSubmit = async (values) => {
     await dispatch(checkAuth()).unwrap();
 
     showNotification('success', 'Success!', 'You have successfully logged in.');
-    navigate(`/home`);
+    window.location.href = `${VITE_URL}/home`;
   } catch (error) {
     showNotification('error', 'Error', error.message || 'Something went wrong');
   }
